@@ -13,6 +13,9 @@ def create_app():
     # Initialize Flask_Security
     app.security = Security(app, datastore)
 
+    with app.app_context():
+        import application.views  # Import views or other components here
+
     return app
 
 app = create_app()
