@@ -39,13 +39,21 @@ def register():
     password = data.get('password')
     name = data.get('name')
     role_name = data.get('role')  # Get the selected role from the request
+    github_user_id = data.get('githubUserId')  # Get the GitHub User ID (if provided)
 
+    # Check for required fields
     if not email or not password or not role_name:
         return jsonify({"message": "Email, password, and role are required"}), 400
 
+    # Ensure that if the role is 'student', GitHub User ID is provided
+    if role_name == 'student' and not github_user_id:
+        return jsonify({"message": "GitHub User ID is required for students"}), 400
+
+    # Check if user already exists by email
     if User.query.filter_by(email=email).first():
         return jsonify({"message": "User already exists"}), 400
 
+    # Hash the password
     hashed_password = generate_password_hash(password)
 
     # Check if the role exists, if not, create it
@@ -55,14 +63,16 @@ def register():
         db.session.add(user_role)
         db.session.commit()
 
-    # Create a new user with the selected role
+    # Create a new user with the selected role and optionally the GitHub User ID
     new_user = User(
         email=email,
         password=hashed_password,
         roles=[user_role],
         name=name,
+        github=github_user_id if role_name == 'student' else None,  # Assign GitHub ID if role is student
         fs_uniquifier=str(uuid.uuid4())
     )
+
     db.session.add(new_user)
     db.session.commit()
 
