@@ -23,7 +23,6 @@ export default {
           role: this.selectedRole,
         };
 
-        // Include GitHub User ID if role is student
         if (this.selectedRole === 'student') {
           requestBody.githubUserId = this.githubUserId;
         }
@@ -55,13 +54,16 @@ export default {
     },
   },
   template: `
-    <div class='d-flex justify-content-center' style="margin-top: 25vh">
-      <div class="mb-3 p-5 bg-light">
-        <h1>Register</h1>
+    <div class="d-flex justify-content-center" style="margin-top: 10vh">
+      <div class="p-4 bg-light rounded border" style="min-width: 400px; max-width: 400px; border-radius: 10px; border: 1px solid #ccc;">
+
+        <!-- Centered Register Title with a line below -->
+        <h1 class="text-center" style="font-size: 2rem;">Sign-up</h1>
+        <hr />
+
         <form @submit.prevent="register">
-          
-          <!-- Role Selection Field moved to the top -->
-          <div>
+          <!-- Role Selection Field -->
+          <div class="mb-1">
             <label for="role" class="form-label">Role:</label>
             <select class="form-control" v-model="selectedRole" required>
               <option value="" disabled>Select your role</option>
@@ -72,30 +74,40 @@ export default {
           </div>
 
           <!-- Conditional field for GitHub User ID, shown only if role is 'student' -->
-          <div v-if="selectedRole === 'student'">
+          <div class="mb-1" v-if="selectedRole === 'student'">
             <label for="githubUserId" class="form-label">GitHub User ID:</label>
             <input type="text" class="form-control" v-model="githubUserId" required />
           </div>
-          
-          <div>
+
+          <!-- Name Input -->
+          <div class="mb-1">
             <label for="name" class="form-label">Name:</label>
             <input type="text" class="form-control" v-model="name" required>
           </div>
-          <div>
+
+          <!-- Email Input -->
+          <div class="mb-1">
             <label for="email" class="form-label">Email:</label>
             <input type="email" class="form-control" v-model="email" required>
           </div>
-          <div>
+
+          <!-- Password Input -->
+          <div class="mb-1">
             <label for="password" class="form-label">Password:</label>
             <input type="password" class="form-control" v-model="password" required>
           </div>
-          
-          <button class="btn btn-primary mt-2" type="submit">Register</button>
-          <button class="btn btn-secondary mt-2" @click="goToLogin">Go to Login</button>
+
+          <!-- Register and Login Buttons -->
+          <div class="text-center">
+            <button class="btn btn-primary w-50 mt-2" type="submit">Sign-up</button>
+          </div>
+          <hr style="margin: 0.2rem 0.2;" />
+          <button class="btn btn-warning w-100 mt-1" @click="goToLogin">Already have an account?</button>
         </form>
 
-        <p v-if="errorMessage" style="color: red;">{{ errorMessage }}</p>
-        <p v-if="successMessage" style="color: green;">{{ successMessage }}</p>
+        <!-- Error and Success Messages -->
+        <p v-if="errorMessage" style="color: red;" class="mt-2 text-center">{{ errorMessage }}</p>
+        <p v-if="successMessage" style="color: green;" class="mt-2 text-center">{{ successMessage }}</p>
       </div>
     </div>
   `,
