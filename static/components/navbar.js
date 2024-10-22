@@ -39,13 +39,13 @@ export default {
     data() {
       return {
         role: localStorage.getItem('role'),
-        is_login: localStorage.getItem('auth_token'),
+        is_login: localStorage.getItem('Authentication-Token'),
       };
     },
   
     methods: {
       logout() {
-        localStorage.removeItem('auth_token');
+        localStorage.removeItem('Authentication-Token');
         localStorage.removeItem('role');
         localStorage.removeItem('user_id');
         this.$router.push({ path: '/login' });

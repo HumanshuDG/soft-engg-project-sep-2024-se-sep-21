@@ -25,7 +25,7 @@ export default {
           const data = await response.json();
 
           if (data.token) {
-            localStorage.setItem('auth_token', data.token);
+            localStorage.setItem('Authentication-Token', data.token);
             localStorage.setItem('role', data.role[0] || '');
             localStorage.setItem('user_id', data.user_id);
 
@@ -67,7 +67,7 @@ export default {
 
         <!-- Email Input -->
         <div class="mb-3">
-          <label for="email" class="form-label">Email Address</label>
+          <label for="user-email" class="form-label">Email Address</label>
           <input type="email" class="form-control" id="user-email" placeholder="name@email.com" v-model="email">
         </div>
 

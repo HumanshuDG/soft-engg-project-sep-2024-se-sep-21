@@ -8,7 +8,7 @@ router.beforeEach((to, from, next) => {
     next();
   } 
   // Redirect to login page if not authenticated
-  else if (!localStorage.getItem('auth_token')) {
+  else if (!localStorage.getItem('Authentication-Token')) {
     alert('You must log in to access this page.');
     next({ name: 'login' });
   } 

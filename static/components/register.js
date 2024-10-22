@@ -65,7 +65,7 @@ export default {
           <!-- Role Selection Field -->
           <div class="mb-1">
             <label for="role" class="form-label">Role:</label>
-            <select class="form-control" v-model="selectedRole" required>
+            <select class="form-control" id= "role" v-model="selectedRole" required>
               <option value="" disabled>Select your role</option>
               <option value="student">Student</option>
               <option value="instructor">Instructor</option>
@@ -76,25 +76,25 @@ export default {
           <!-- Conditional field for GitHub User ID, shown only if role is 'student' -->
           <div class="mb-1" v-if="selectedRole === 'student'">
             <label for="githubUserId" class="form-label">GitHub User ID:</label>
-            <input type="text" class="form-control" v-model="githubUserId" required />
+            <input type="text" class="form-control" id= "githubUserId" v-model="githubUserId" required />
           </div>
 
           <!-- Name Input -->
           <div class="mb-1">
             <label for="name" class="form-label">Name:</label>
-            <input type="text" class="form-control" v-model="name" required>
+            <input type="text" class="form-control" id="name" v-model="name" required>
           </div>
 
           <!-- Email Input -->
           <div class="mb-1">
             <label for="email" class="form-label">Email:</label>
-            <input type="email" class="form-control" v-model="email" required>
+            <input type="email" class="form-control" id="email" placeholder="name@email.com" v-model="email" required>
           </div>
 
           <!-- Password Input -->
           <div class="mb-1">
             <label for="password" class="form-label">Password:</label>
-            <input type="password" class="form-control" v-model="password" required>
+            <input type="password" class="form-control" id="password" v-model="password" required>
           </div>
 
           <!-- Register and Login Buttons -->
