@@ -11,8 +11,8 @@ with app.app_context():
         datastore.create_role(name="admin", description="This is an Admin")
     if not datastore.find_role("instructor"):
         datastore.create_role(name="instructor", description="This is an Instructor")
-    if not datastore.find_role("students"):
-        datastore.create_role(name="students", description="This is a Student")
+    if not datastore.find_role("student"):
+        datastore.create_role(name="student", description="This is a Student")
     if not datastore.find_role("TA"):
         datastore.create_role(name="TA", description="This is a TA")
     db.session.commit()
