@@ -56,6 +56,10 @@ export default {
   template: `
     <div class="d-flex justify-content-center" style="margin-top: 10vh">
       <div class="p-4 bg-light rounded border" style="min-width: 400px; max-width: 400px; border-radius: 10px; border: 1px solid #ccc;">
+       
+      <!-- Error and Success Messages -->
+        <p v-if="errorMessage" style="color: red;" class="mt-2 text-center">{{ errorMessage }}</p>
+        <p v-if="successMessage" style="color: green;" class="mt-2 text-center">{{ successMessage }}</p>
 
         <!-- Centered Register Title with a line below -->
         <h1 class="text-center" style="font-size: 2rem;">Sign-up</h1>
@@ -104,10 +108,6 @@ export default {
           <hr style="margin: 0.2rem 0.2;" />
           <button class="btn btn-warning w-100 mt-1" @click="goToLogin">Already have an account?</button>
         </form>
-
-        <!-- Error and Success Messages -->
-        <p v-if="errorMessage" style="color: red;" class="mt-2 text-center">{{ errorMessage }}</p>
-        <p v-if="successMessage" style="color: green;" class="mt-2 text-center">{{ successMessage }}</p>
       </div>
     </div>
   `,

@@ -47,15 +47,16 @@ export default {
                  <!-- Button to View Team -->
                     <button class="btn btn-primary" @click="viewTeam(team.id)">View Team</button>
 
-                <!-- Conditional Display for Assign TA -->
-                <div>
-                  <div v-if="team.ta_id !== null && team.ta">
-                    <h6>Assigned TA: {{ team.ta.name }}</h6>
-                  </div>
-                  <div v-else>
-                    <button class="btn btn-secondary" @click="openAssignTAModal(team.id)">Assign TA</button>
-                  </div>
+                  <!-- Conditional Display for Assign TA -->
+                  <div>
+                    <div v-if="team.ta_id == null">
+                      <button class="btn btn-secondary" @click="openAssignTAModal(team.id)"> Assign TA </button>
+                    </div>
+                    <div v-else>
+                      <h6>Assigned TA: {{ team.ta.name }}</h6>
+                    </div>
                 </div>
+                
                 </div>
               </div>
             </div>
@@ -273,7 +274,6 @@ export default {
       instructorName: '',
 
       showAssignTAModal: false,
-      teams: [],
       availableTAs: [],
       selectedTeamId: null, // Store the currently selected team ID
     };
@@ -304,6 +304,28 @@ export default {
         }
       } catch (error) {
         console.error('Error fetching TAs:', error);
+      }
+    },
+
+    async assignTA(taId) {
+      try {
+        const response = await fetch(`api/teams/${this.selectedTeamId}/assign-ta`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ ta_id: taId }),
+        });
+        
+        if (response.ok) {
+          const updatedTeam = await response.json();
+          this.$emit('update-team', updatedTeam); // Emitting the updated team to parent for reactivity
+          this.closeAssignTAModal();
+        } else {
+          console.error('Failed to assign TA');
+        }
+      } catch (error) {
+        console.error('Error assigning TA:', error);
       }
     },
     

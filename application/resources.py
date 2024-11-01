@@ -171,7 +171,7 @@ class MilestoneListResource(Resource):
         db.session.add(milestone)
         db.session.commit()
         return milestone, 201
-    
+        
 class TeamListResource(Resource):
     def post(self):
         data = request.get_json()
@@ -227,6 +227,7 @@ class TAListResource(Resource):
         tas = User.query.join(roles_users).join(Role).filter(Role.name == 'TA').all()
         return tas
     
+#API to assign/update TA for each team  
 class TeamResource(Resource):
     @marshal_with(team_fields)
     def put(self, team_id):
@@ -268,3 +269,4 @@ api.add_resource(TAListResource, '/tas')
 
 # Register the TeamResource with a new route
 api.add_resource(TeamResource, '/teams/<int:team_id>/assign-ta')
+
