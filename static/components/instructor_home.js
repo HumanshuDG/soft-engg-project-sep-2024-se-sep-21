@@ -63,8 +63,8 @@ export default {
 
             <div class="project-footer d-flex justify-content-between align-items-center mt-3">
               <button class="btn btn-warning milestone-btn" @click="openMilestoneModal(project)">Milestones</button>
-              <span class="mx-auto"><strong>Start:</strong> {{ project.start_date }}</span>
-              <span><strong>Close:</strong> {{ project.end_date }}</span>
+              <span class="mx-auto"><strong>Created On:</strong> {{ project.created_on }}</span>
+              <span><strong>Deadline:</strong> {{ project.deadline }}</span>
             </div>
           </div>
         </div>
@@ -112,12 +112,8 @@ export default {
                   <textarea class="form-control" id="projectDescription" v-model="newProject.description" required></textarea>
                 </div>
                 <div class="mb-3">
-                  <label for="startDate" class="form-label">Start Date</label>
-                  <input type="date" class="form-control" id="startDate" v-model="newProject.start_date" required />
-                </div>
-                <div class="mb-3">
-                  <label for="endDate" class="form-label">End Date</label>
-                  <input type="date" class="form-control" id="endDate" v-model="newProject.end_date" :min="newProject.start_date" required />
+                  <label for="Deadline" class="form-label">Deadline</label>
+                  <input type="date" class="form-control" id="startDate" v-model="newProject.deadline" required />
                 </div>
                 <div class="mb-3">
                   <label for="minTeammates" class="form-label">Minimum Teammates</label>
@@ -154,12 +150,8 @@ export default {
                   <textarea class="form-control" id="editProjectDescription" v-model="selectedProject.description" required></textarea>
                 </div>
                 <div class="mb-3">
-                  <label for="editStartDate" class="form-label">Start Date</label>
-                  <input type="date" class="form-control" id="editStartDate" v-model="selectedProject.start_date" required />
-                </div>
-                <div class="mb-3">
-                  <label for="editEndDate" class="form-label">End Date</label>
-                  <input type="date" class="form-control" id="editEndDate" v-model="selectedProject.end_date" :min="selectedProject.start_date" required />
+                  <label for="editDeadline" class="form-label">Deadline</label>
+                  <input type="date" class="form-control" id="editDeadline" v-model="selectedProject.deadline" required />
                 </div>
                 <div class="mb-3">
                   <label for="editMinTeammates" class="form-label">Minimum Teammates</label>
@@ -249,20 +241,20 @@ export default {
       deleteModalVisible: false,
       selectedProject: {
         id: null,
+        creator_id : localStorage.getItem('user_id'),
         name: '',
-        description: '',
-        start_date: '',
-        end_date: '',
-        min_teammates: 1,
+        deadline: '',
         max_teammates: 1,
+        min_teammates: 1,
+        description: '',
       },
       newProject: {
         name: '',
-        description: '',
-        start_date: '',
-        end_date: '',
-        min_teammates: 1,
+        creator_id : localStorage.getItem('user_id'),
+        deadline: '',
         max_teammates: 1,
+        min_teammates: 1,
+        description: '',
       },
       milestoneModalVisible: false, // Control visibility of the milestone modal
       currentProject: {}, // Store current project data
@@ -272,7 +264,7 @@ export default {
       milestoneDueDate: '', // Due date for the new milestone
       currentMilestoneId: null, // Track current milestone ID for editing
       instructorName: '',
-
+  
       showAssignTAModal: false,
       availableTAs: [],
       selectedTeamId: null, // Store the currently selected team ID
@@ -284,6 +276,10 @@ export default {
   },
   
   methods: {
+    viewTeam(teamId) {
+      this.$router.push({ name: 'project_team', params: { teamId } });
+  },
+
     openAssignTAModal(teamId) {
       this.selectedTeamId = teamId;
       this.showAssignTAModal = true;
@@ -292,7 +288,7 @@ export default {
     closeAssignTAModal() {
       this.showAssignTAModal = false;
     },
-
+  
     // fetch available TAs
     async fetchAvailableTAs() {
       try {
@@ -306,10 +302,10 @@ export default {
         console.error('Error fetching TAs:', error);
       }
     },
-
+  
     async assignTA(taId) {
       try {
-        const response = await fetch(`api/teams/${this.selectedTeamId}/assign-ta`, {
+        const response = await fetch(`/api/teams/${this.selectedTeamId}/assign-ta`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -343,7 +339,7 @@ export default {
         console.error('Error loading project:', error);
       }
     },
-
+  
     async fetchMilestones(projectId) {
       try {
         const response = await fetch(`/api/milestones?project_id=${projectId}`);
@@ -360,7 +356,7 @@ export default {
         console.error('Error fetching milestones:', error);
       }
     },
-
+  
     openMilestoneModal(project) {
       this.currentProject = project;
       this.milestoneName = '';
@@ -369,12 +365,12 @@ export default {
       this.milestones = project.milestones || [];
       this.milestoneModalVisible = true;
     },
-
+  
     closeMilestoneModal() {
       this.milestoneModalVisible = false;
       this.currentMilestoneId = null;
     },
-
+  
     async createMilestone() {
       const milestoneData = {
         name: this.milestoneName,
@@ -382,7 +378,7 @@ export default {
         due_date: this.milestoneDueDate,
         project_id: this.currentProject.id,
       };
-
+  
       try {
         const response = await fetch('/api/milestones', {
           method: 'POST',
@@ -391,7 +387,7 @@ export default {
           },
           body: JSON.stringify(milestoneData),
         });
-
+  
         if (response.ok) {
           await this.fetchMilestones(this.currentProject.id);
           this.closeMilestoneModal();
@@ -402,7 +398,7 @@ export default {
         console.error('Error creating milestone:', error);
       }
     },
-
+  
     openEditMilestoneModal(milestone) {
       this.milestoneName = milestone.name;
       this.milestoneDescription = milestone.description;
@@ -410,7 +406,7 @@ export default {
       this.currentMilestoneId = milestone.id;
       this.milestoneModalVisible = true;
     },
-
+  
     async confirmDeleteMilestone(milestone) {
       if (confirm('Are you sure you want to delete this milestone?')) {
         try {
@@ -427,7 +423,7 @@ export default {
         }
       }
     },
-
+  
     async fetchProjects() {
       try {
         const response = await fetch('/api/projects');
@@ -452,32 +448,32 @@ export default {
         console.error('Error fetching projects:', error);
       }
     },
-
+  
     openEditModal(project) {
       this.selectedProject = { ...project };
       this.editModalVisible = true;
     },
-
+  
     closeEditModal() {
       this.editModalVisible = false;
       this.resetSelectedProject();
     },
-
+  
     confirmDeleteProject(project) {
       this.selectedProject = project;
       this.deleteModalVisible = true;
     },
-
+  
     closeDeleteModal() {
       this.deleteModalVisible = false;
       this.resetSelectedProject();
     },
-
+  
     closeModal() {
       this.showModal = false;
       this.resetNewProject();
     },
-
+  
     async createProject() {
       try {
         const response = await fetch('/api/projects', {
@@ -487,7 +483,7 @@ export default {
           },
           body: JSON.stringify(this.newProject),
         });
-
+  
         if (response.ok) {
           const createdProject = await response.json();
           this.projects.push(createdProject);
@@ -499,7 +495,7 @@ export default {
         console.error('Error creating project:', error);
       }
     },
-
+  
     async updateProject() {
       try {
         const response = await fetch(`/api/projects/${this.selectedProject.id}`, {
@@ -509,7 +505,7 @@ export default {
           },
           body: JSON.stringify(this.selectedProject),
         });
-
+  
         if (response.ok) {
           const updatedProject = await response.json();
           const index = this.projects.findIndex(p => p.id === updatedProject.id);
@@ -522,13 +518,13 @@ export default {
         console.error('Error updating project:', error);
       }
     },
-
+  
     async deleteProject() {
       try {
         const response = await fetch(`/api/projects/${this.selectedProject.id}`, {
           method: 'DELETE',
         });
-
+  
         if (response.ok) {
           this.projects = this.projects.filter(p => p.id !== this.selectedProject.id);
           this.closeDeleteModal();
@@ -539,7 +535,7 @@ export default {
         console.error('Error deleting project:', error);
       }
     },
-
+  
     async fetchInstructorName() {
       const userId = localStorage.getItem('user_id');
       if (userId) {
@@ -556,7 +552,7 @@ export default {
         }
       }
     },
-
+  
     resetSelectedProject() {
       this.selectedProject = {
         id: null,
@@ -568,7 +564,7 @@ export default {
         max_teammates: 1,
       };
     },
-
+  
     resetNewProject() {
       this.newProject = {
         name: '',
@@ -580,4 +576,4 @@ export default {
       };
     },
   },
-};
+}

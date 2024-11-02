@@ -1,129 +1,322 @@
 from flask_restful import Api, Resource, reqparse, fields, marshal_with
-from flask import request
-from application.models import db, Project, User, Milestone, Team, TeamMember, Role, roles_users
 from datetime import datetime
+from application.models import db, User, Role, Project, Team, TeamMember, Enrollment, TAAllocation, ProjectSubmit, Milestone, MilestoneSubmit
 
+# Initialize the API
 api = Api(prefix="/api")
 
-# Define request parsers
+# Parsers for each model
+user_parser = reqparse.RequestParser()
+user_parser.add_argument('github_id', type=str)
+user_parser.add_argument('name', type=str, required=True)
+user_parser.add_argument('email', type=str, required=True)
+user_parser.add_argument('password', type=str, required=True)
+
 project_parser = reqparse.RequestParser()
-project_parser.add_argument('name', type=str, required=True, help='Name of the project')
-project_parser.add_argument('description', type=str, help='Description of the project')
-project_parser.add_argument('min_teammates', type=int, required=True, help='Minimum number of teammates')
-project_parser.add_argument('max_teammates', type=int, required=True, help='Maximum number of teammates')
-project_parser.add_argument('start_date', type=str, required=False, help='Start date of the project (YYYY-MM-DD)')
-project_parser.add_argument('end_date', type=str, required=False, help='End date of the project (YYYY-MM-DD)')
+project_parser.add_argument('name', type=str, required=True)
+project_parser.add_argument('creator_id', type=int, required=True)
+project_parser.add_argument('deadline', type=str)
+project_parser.add_argument('max_teammates', type=int, required=True)
+project_parser.add_argument('min_teammates', type=int, required=True)
+project_parser.add_argument('description', type=str)
 
-# Define request parsers for milestones
+team_parser = reqparse.RequestParser()
+team_parser.add_argument('project_id', type=int, required=True)
+team_parser.add_argument('team_name', type=str)
+team_parser.add_argument('repo', type=str)
+
+
+enrollment_parser = reqparse.RequestParser()
+enrollment_parser.add_argument('student_id', type=int, required=True)
+enrollment_parser.add_argument('project_id', type=int, required=True)
+enrollment_parser.add_argument('team_id', type=int)
+
+ta_allocation_parser = reqparse.RequestParser()
+ta_allocation_parser.add_argument('ta_id', type=int, required=True)
+ta_allocation_parser.add_argument('team_id', type=int, required=True)
+
+project_submit_parser = reqparse.RequestParser()
+project_submit_parser.add_argument('team_id', type=int, required=True)
+project_submit_parser.add_argument('project_id', type=int, required=True)
+
 milestone_parser = reqparse.RequestParser()
-milestone_parser.add_argument('name', type=str, required=True, help='Name of the milestone')
-milestone_parser.add_argument('description', type=str, help='Description of the milestone')
-milestone_parser.add_argument('due_date', type=str, required=True, help='Due date of the milestone (YYYY-MM-DD)')
-milestone_parser.add_argument('project_id', type=int, required=True, help='Project ID the milestone belongs to')
+milestone_parser.add_argument('milestone_number', type=int, required=True)
+milestone_parser.add_argument('project_id', type=int, required=True)
+milestone_parser.add_argument('deadline', type=str)
+milestone_parser.add_argument('description', type=str)
 
-# Resource fields for marshalling
+milestone_submit_parser = reqparse.RequestParser()
+milestone_submit_parser.add_argument('team_id', type=int, required=True)
+milestone_submit_parser.add_argument('milestone_id', type=int, required=True)
+
+enrollment_check_parser = reqparse.RequestParser()
+enrollment_check_parser.add_argument('student_id', type=int, required=True, help='Student ID cannot be blank')
+enrollment_check_parser.add_argument('project_id', type=int, required=True, help='Project ID cannot be blank')
+
+
+# Define fields for marshaling responses
+user_fields = {
+    'id': fields.Integer,
+    'github_id': fields.String,
+    'name': fields.String,
+    'email': fields.String,
+    'account_created': fields.DateTime,
+}
+
 project_fields = {
     'id': fields.Integer,
     'name': fields.String,
-    'description': fields.String,
-    'min_teammates': fields.Integer,
+    'creator_id': fields.Integer,
+    'created_on': fields.DateTime,
+    'deadline': fields.DateTime,
     'max_teammates': fields.Integer,
-    'start_date': fields.String,
-    'end_date': fields.String
-}
-
-milestone_fields = {
-    'id': fields.Integer,
-    'name': fields.String,
+    'min_teammates': fields.Integer,
     'description': fields.String,
-    'due_date': fields.String,  # Consider formatting this if needed
-    'project_id': fields.Integer
-}
-
-user_fields = {
-    'id': fields.Integer,
-    'name': fields.String,
-    'email': fields.String,
-    'github': fields.String
 }
 
 team_fields = {
     'id': fields.Integer,
-    'name': fields.String,
-    'repo': fields.String,
-    'ta': fields.Nested(user_fields, attribute='ta'),
     'project_id': fields.Integer,
+    'team_name': fields.String,
+    'repo': fields.String,
+    'created_on': fields.DateTime,
     'members': fields.List(fields.Nested({
         'id': fields.Integer,
         'name': fields.String(attribute='user.name')  # Pull member names
     }))
 }
 
+enrollment_fields = {
+    'id': fields.Integer,
+    'student_id': fields.Integer,
+    'project_id': fields.Integer,
+    'team_id': fields.Integer,
+    'enrollment_date': fields.DateTime,
+}
+
+ta_allocation_fields = {
+    'id': fields.Integer,
+    'ta_id': fields.Integer,
+    'team_id': fields.Integer,
+    'assigned_on': fields.DateTime,
+}
+
+project_submit_fields = {
+    'id': fields.Integer,
+    'team_id': fields.Integer,
+    'project_id': fields.Integer,
+    'submission_date': fields.DateTime,
+}
+
+milestone_fields = {
+    'id': fields.Integer,
+    'milestone_number': fields.Integer,
+    'project_id': fields.Integer,
+    'created_on': fields.DateTime,
+    'deadline': fields.DateTime,
+    'description': fields.String,
+}
+
+milestone_submit_fields = {
+    'id': fields.Integer,
+    'team_id': fields.Integer,
+    'milestone_id': fields.Integer,
+    'submission_date': fields.DateTime,
+}
+
+
 # User Resource
 class UserResource(Resource):
     @marshal_with(user_fields)
     def get(self, user_id):
-        user = User.query.get_or_404(user_id)  # Fetch the user by ID
+        user = User.query.get_or_404(user_id)
         return user
+
+    @marshal_with(user_fields)
+    def post(self):
+        args = user_parser.parse_args()
+        user = User(
+            github_id=args['github_id'],
+            username=args['name'],
+            email=args['email'],
+            password=args['password'],
+            account_created=datetime.utcnow()
+        )
+        db.session.add(user)
+        db.session.commit()
+        return user, 201
+
+    def delete(self, user_id):
+        user = User.query.get_or_404(user_id)
+        db.session.delete(user)
+        db.session.commit()
+        return {'message': 'User deleted successfully'}, 204
 
 # Project Resource
 class ProjectResource(Resource):
     @marshal_with(project_fields)
-    def get(self, project_id):
-        project = Project.query.get_or_404(project_id)
-        return project
-
-    @marshal_with(project_fields)
-    def put(self, project_id):
-        args = project_parser.parse_args()
-        project = Project.query.get_or_404(project_id)
-        project.name = args['name']
-        project.description = args.get('description')
-        project.min_teammates = args['min_teammates']
-        project.max_teammates = args['max_teammates']
-        
-        # Handle start_date and end_date
-        if args.get('start_date'):
-            project.start_date = datetime.strptime(args['start_date'], '%Y-%m-%d').date()
-        if args.get('end_date'):
-            project.end_date = datetime.strptime(args['end_date'], '%Y-%m-%d').date()
-
-        db.session.commit()
-        return project
-
-    def delete(self, project_id):
-        project = Project.query.get_or_404(project_id)
-        db.session.delete(project)
-        db.session.commit()
-        return '', 204
-
-class ProjectListResource(Resource):
-    @marshal_with(project_fields)
-    def get(self):
-        projects = Project.query.all()
-        return projects
+    def get(self, project_id=None):
+        if project_id is None:
+            # Fetch all projects
+            projects = Project.query.all()
+            return projects  # Return all projects
+        else:
+            # Fetch a specific project by ID
+            project = Project.query.get_or_404(project_id)
+            return project
 
     @marshal_with(project_fields)
     def post(self):
         args = project_parser.parse_args()
         project = Project(
             name=args['name'],
-            description=args.get('description'),
+            creator_id=args['creator_id'],
+            deadline=datetime.fromisoformat(args['deadline']) if args['deadline'] else None,
+            max_teammates=args['max_teammates'],
             min_teammates=args['min_teammates'],
-            max_teammates=args['max_teammates']
+            description=args['description']
         )
-        
-        # Handle start_date and end_date
-        if args.get('start_date'):
-            project.start_date = datetime.strptime(args['start_date'], '%Y-%m-%d').date()
-        if args.get('end_date'):
-            project.end_date = datetime.strptime(args['end_date'], '%Y-%m-%d').date()
-
         db.session.add(project)
         db.session.commit()
         return project, 201
     
-# Milestone Resource
+    @marshal_with(project_fields)
+    def put(self, project_id):
+        args = project_parser.parse_args()
+        project = Project.query.get_or_404(project_id)
+        
+        # Update project fields with new values
+        project.name = args['name']
+        project.creator_id = args['creator_id']
+        project.deadline = datetime.fromisoformat(args['deadline']) if args['deadline'] else None
+        project.max_teammates = args['max_teammates']
+        project.min_teammates = args['min_teammates']
+        project.description = args['description']
+
+        db.session.commit()  # Commit the changes
+        return project, 200  # Return the updated project
+
+    def delete(self, project_id):
+        project = Project.query.get_or_404(project_id)
+        db.session.delete(project)
+        db.session.commit()
+        return {'message': 'Project deleted successfully'}, 204
+
+# Team Resource
+class TeamResource(Resource):
+    @marshal_with(team_fields)
+    def get(self, team_id):
+        team = Team.query.get_or_404(team_id)
+        return team
+
+    @marshal_with(team_fields)
+    def post(self):
+        args = team_parser.parse_args()
+        team = Team(
+            project_id=args['project_id'],
+            repo=args['repo'],
+            team_name=args['team_name'],
+            created_on=datetime.utcnow()
+        )
+        db.session.add(team)
+        db.session.commit()
+        return team, 201
+
+    def delete(self, team_id):
+        team = Team.query.get_or_404(team_id)
+        db.session.delete(team)
+        db.session.commit()
+        return {'message': 'Team deleted successfully'}, 204
+
+class EnrollmentResource(Resource):
+    @marshal_with(enrollment_fields)
+    def get(self, enrollment_id):
+        enrollment = Enrollment.query.get_or_404(enrollment_id)
+        return enrollment
+
+    @marshal_with(enrollment_fields)
+    def post(self):
+        args = enrollment_parser.parse_args()
+        student_id = args['student_id']
+        project_id = args['project_id']
+        team_id = args['team_id']
+
+        # Check if the student is already enrolled in the specified project
+        existing_enrollment = Enrollment.query.filter_by(student_id=student_id, project_id=project_id).first()
+        if existing_enrollment:
+            return {'message': 'You are already enrolled in this project.'}, 400
+
+        # Create the enrollment entry
+        enrollment = Enrollment(
+            student_id=student_id,
+            project_id=project_id,
+            team_id=team_id,
+            enrollment_date=datetime.utcnow()
+        )
+        db.session.add(enrollment)
+
+        # Create a TeamMember entry for the user in the specified team
+        team_member = TeamMember(user_id=student_id, team_id=team_id)
+        db.session.add(team_member)
+
+        db.session.commit()
+        return enrollment, 201
+
+    def delete(self, enrollment_id):
+        enrollment = Enrollment.query.get_or_404(enrollment_id)
+        db.session.delete(enrollment)
+        db.session.commit()
+        return {'message': 'Enrollment deleted successfully'}, 204
+
+
+class TAAllocationResource(Resource):
+    @marshal_with(ta_allocation_fields)
+    def get(self, allocation_id):
+        allocation = TAAllocation.query.get_or_404(allocation_id)
+        return allocation
+
+    @marshal_with(ta_allocation_fields)
+    def post(self):
+        args = ta_allocation_parser.parse_args()
+        allocation = TAAllocation(
+            ta_id=args['ta_id'],
+            team_id=args['team_id'],
+            assigned_on=datetime.utcnow()
+        )
+        db.session.add(allocation)
+        db.session.commit()
+        return allocation, 201
+
+    def delete(self, allocation_id):
+        allocation = TAAllocation.query.get_or_404(allocation_id)
+        db.session.delete(allocation)
+        db.session.commit()
+        return {'message': 'TA Allocation deleted successfully'}, 204
+
+class ProjectSubmitResource(Resource):
+    @marshal_with(project_submit_fields)
+    def get(self, submission_id):
+        submission = ProjectSubmit.query.get_or_404(submission_id)
+        return submission
+
+    @marshal_with(project_submit_fields)
+    def post(self):
+        args = project_submit_parser.parse_args()
+        submission = ProjectSubmit(
+            team_id=args['team_id'],
+            project_id=args['project_id'],
+            submission_date=datetime.utcnow()
+        )
+        db.session.add(submission)
+        db.session.commit()
+        return submission, 201
+
+    def delete(self, submission_id):
+        submission = ProjectSubmit.query.get_or_404(submission_id)
+        db.session.delete(submission)
+        db.session.commit()
+        return {'message': 'Project Submission deleted successfully'}, 204
+
 class MilestoneResource(Resource):
     @marshal_with(milestone_fields)
     def get(self, milestone_id):
@@ -131,142 +324,75 @@ class MilestoneResource(Resource):
         return milestone
 
     @marshal_with(milestone_fields)
-    def put(self, milestone_id):
+    def post(self):
         args = milestone_parser.parse_args()
-        milestone = Milestone.query.get_or_404(milestone_id)
-        milestone.name = args['name']
-        milestone.description = args.get('description')
-        milestone.due_date = datetime.strptime(args['due_date'], '%Y-%m-%d')  # Parse the date
-        milestone.project_id = args['project_id']
-
+        milestone = Milestone(
+            milestone_number=args['milestone_number'],
+            project_id=args['project_id'],
+            deadline=datetime.fromisoformat(args['deadline']) if args['deadline'] else None,
+            description=args['description']
+        )
+        db.session.add(milestone)
         db.session.commit()
-        return milestone
+        return milestone, 201
 
     def delete(self, milestone_id):
         milestone = Milestone.query.get_or_404(milestone_id)
         db.session.delete(milestone)
         db.session.commit()
-        return '', 204
+        return {'message': 'Milestone deleted successfully'}, 204
 
-class MilestoneListResource(Resource):
-    @marshal_with(milestone_fields)
-    def get(self):
-        project_id = request.args.get('project_id', type=int)
-        if project_id:
-            milestones = Milestone.query.filter_by(project_id=project_id).all()
-            return milestones
-        milestones = Milestone.query.all()
-        return milestones
+class MilestoneSubmitResource(Resource):
+    @marshal_with(milestone_submit_fields)
+    def get(self, submission_id):
+        submission = MilestoneSubmit.query.get_or_404(submission_id)
+        return submission
 
-    @marshal_with(milestone_fields)
+    @marshal_with(milestone_submit_fields)
     def post(self):
-        args = milestone_parser.parse_args()
-        milestone = Milestone(
-            name=args['name'],
-            description=args.get('description'),
-            due_date=datetime.strptime(args['due_date'], '%Y-%m-%d'),
-            project_id=args['project_id']
+        args = milestone_submit_parser.parse_args()
+        submission = MilestoneSubmit(
+            team_id=args['team_id'],
+            milestone_id=args['milestone_id'],
+            submission_date=datetime.utcnow()
         )
-        
-        db.session.add(milestone)
+        db.session.add(submission)
         db.session.commit()
-        return milestone, 201
-        
-class TeamListResource(Resource):
-    def post(self):
-        data = request.get_json()
-        project_id = data.get('project_id')
-        user_id = data.get('user_id')
-        repo_url = data.get('repo')  # Get repo URL from the request
+        return submission, 201
 
-        # Check if project exists
-        project = Project.query.get(project_id)
-        if not project:
-            return {'message': 'Project not found'}, 404
-
-        # Check if user is already enrolled in this project
-        existing_team_member = TeamMember.query.filter_by(user_id=user_id).join(Team).filter(Team.project_id == project_id).first()
-        if existing_team_member:
-            return {'message': 'User is already enrolled in this project.'}, 400
-
-        # Find a team with an available slot in the same project
-        team = (
-            Team.query.filter_by(project_id=project_id)
-            .filter(Team.members.any())  # Check that team already has members
-            .join(TeamMember)
-            .group_by(Team.id)
-            .having(db.func.count(TeamMember.id) < project.max_teammates)  # Only teams with space
-            .first()
-        )
-
-        # If no team with available slots, create a new team
-        if not team:
-            team = Team(name=f"Team for {project.name}", project_id=project_id, repo=repo_url)
-            db.session.add(team)
-            db.session.commit()
-
-        # Add the user to the selected or newly created team
-        team_member = TeamMember(user_id=user_id, team_id=team.id)
-        db.session.add(team_member)
+    def delete(self, submission_id):
+        submission = MilestoneSubmit.query.get_or_404(submission_id)
+        db.session.delete(submission)
         db.session.commit()
+        return {'message': 'Milestone Submission deleted successfully'}, 204
 
-        return {'message': 'User enrolled in project successfully'}, 201
-    
-# Api to fetch teams associated with each project   
-class ProjectTeamsResource(Resource):
+class ProjectTeamResource(Resource):
     @marshal_with(team_fields)
     def get(self, project_id):
         project = Project.query.get_or_404(project_id)
-        teams = Team.query.filter_by(project_id=project_id).all()
-        return teams
+        teams = project.teams 
+        return teams, 200  
 
-class TAListResource(Resource):
-    @marshal_with(user_fields)
-    def get(self):
-        # Fetch TAs who have the role of 'TA'
-        tas = User.query.join(roles_users).join(Role).filter(Role.name == 'TA').all()
-        return tas
-    
-#API to assign/update TA for each team  
-class TeamResource(Resource):
-    @marshal_with(team_fields)
-    def put(self, team_id):
-        # Fetching the team by ID
-        team = Team.query.get_or_404(team_id)
-
-        # Getting TA ID from request JSON
-        data = request.get_json()
-        ta_id = data.get('ta_id')
-
-        # Assign the TA to the team
-        if ta_id:
-            team.ta_id = ta_id
-            db.session.commit()
-            return team, 200
+class EnrollmentCheckResource(Resource):
+    @marshal_with(enrollment_fields)
+    def get(self, project_id, student_id):
+        # Query for existing enrollment
+        enrollment = Enrollment.query.filter_by(student_id=student_id, project_id=project_id).first()
+        
+        if enrollment:
+            return enrollment, 200  # Student is already enrolled in the project
         else:
-            return {'message': 'TA ID is required'}, 400
+            return {'message': 'Student is not enrolled in this project.'}, 404
 
 
-# Registering Project Resources
-api.add_resource(ProjectResource, '/projects/<int:project_id>')
-api.add_resource(ProjectListResource, '/projects')
-
-# Registering the UserResource
-api.add_resource(UserResource, '/users/<int:user_id>')
-
-# Registering Milestone Resources
-api.add_resource(MilestoneResource, '/milestones/<int:milestone_id>')
-api.add_resource(MilestoneListResource, '/milestones')
-
-# Register the TeamListResource for creating a team
-api.add_resource(TeamListResource, '/teams')
-
-# Register the ProjectTeamsResource
-api.add_resource(ProjectTeamsResource, '/projects/<int:project_id>/teams')
-
-# Register the TAListResource
-api.add_resource(TAListResource, '/tas')
-
-# Register the TeamResource with a new route
-api.add_resource(TeamResource, '/teams/<int:team_id>/assign-ta')
-
+# Register resources with the API
+api.add_resource(UserResource, '/users', '/users/<int:user_id>')
+api.add_resource(ProjectResource, '/projects', '/projects/<int:project_id>')
+api.add_resource(TeamResource, '/teams', '/teams/<int:team_id>')
+api.add_resource(EnrollmentResource, '/enrollments', '/enrollments/<int:enrollment_id>')
+api.add_resource(TAAllocationResource, '/ta_allocations', '/ta_allocations/<int:allocation_id>')
+api.add_resource(ProjectSubmitResource, '/project_submits', '/project_submits/<int:submission_id>')
+api.add_resource(MilestoneResource, '/milestones', '/milestones/<int:milestone_id>')
+api.add_resource(MilestoneSubmitResource, '/milestone_submits', '/milestone_submits/<int:submission_id>')
+api.add_resource(ProjectTeamResource, '/projects/<int:project_id>/teams')
+api.add_resource(EnrollmentCheckResource, '/projects/<int:project_id>/enrollments/<int:student_id>')

@@ -27,7 +27,7 @@ def user_login():
         return jsonify({'message': 'Incorrect Password'}), 401
 
     # Update last_active timestamp
-    user.last_active = datetime.utcnow()
+    user.last_login = datetime.utcnow()
     db.session.commit()
 
     return jsonify({'token': user.get_auth_token(), 'role': [role.name for role in user.roles], 'user_id': user.id}), 200
@@ -69,7 +69,7 @@ def register():
         password=hashed_password,
         roles=[user_role],
         name=name,
-        github=github_user_id if role_name == 'student' else None,  # Assign GitHub ID if role is student
+        github_id=github_user_id if role_name == 'student' else None,  # Assign GitHub ID if role is student
         fs_uniquifier=str(uuid.uuid4())
     )
 
