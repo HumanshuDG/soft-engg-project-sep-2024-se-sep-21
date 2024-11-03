@@ -34,32 +34,32 @@ export default {
                   v-for="team in project.teams"
                   :key="team.id"
                 >
-                  <h6> Team ID: {{ team.id }}</h6>
-                  <h6> GitHub Repo: 
-                      <a :href="team.repo" target="_blank" rel="noopener noreferrer">{{ team.repo }}</a>
-                  </h6>
+                  <h6> Team Name: {{ team.team_name }}</h6>
+
                   <h6>Members:</h6>
                   <ul>
                     <li v-for="member in team.members" :key="member.id">{{ member.name }}</li>
                   </ul>
 
-
-                 <!-- Button to View Team -->
+                  <!-- Flex container for buttons -->
+                  <div class="d-flex justify-content-between align-items-center mt-2">
+                    <!-- Button to View Team -->
                     <button class="btn btn-primary" @click="viewTeam(team.id)">View Team</button>
 
-                  <!-- Conditional Display for Assign TA -->
-                  <div>
-                    <div v-if="team.ta_id == null">
-                      <button class="btn btn-secondary" @click="openAssignTAModal(team.id)"> Assign TA </button>
+                    <!-- Conditional Display for Assign TA -->
+                    <div>
+                      <div v-if="team.ta_id == null">
+                        <button class="btn btn-secondary" @click="openAssignTAModal(team.id)">Assign TA</button>
+                      </div>
+                      <div v-else>
+                        <h6 class="m-0">Assigned TA: {{ team.ta.name }}</h6>
+                      </div>
                     </div>
-                    <div v-else>
-                      <h6>Assigned TA: {{ team.ta.name }}</h6>
-                    </div>
-                </div>
-                
+                  </div>
                 </div>
               </div>
             </div>
+
 
             <div class="project-footer d-flex justify-content-between align-items-center mt-3">
               <button class="btn btn-warning milestone-btn" @click="openMilestoneModal(project)">Milestones</button>
