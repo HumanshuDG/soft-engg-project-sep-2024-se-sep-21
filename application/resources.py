@@ -1,4 +1,4 @@
-from flask_restful import Api, Resource, reqparse, fields, marshal_with
+from flask_restful import Api, Resource, reqparse, fields, marshal_with, request
 from datetime import datetime
 from application.models import db, User, Role, Project, Team, TeamMember, Enrollment, TAAllocation, ProjectSubmit, Milestone, MilestoneSubmit
 
@@ -113,7 +113,7 @@ milestone_fields = {
     'milestone_number': fields.Integer,
     'project_id': fields.Integer,
     'created_on': fields.DateTime,
-    'deadline': fields.DateTime,
+    'deadline': fields.String,
     'description': fields.String,
 }
 
@@ -326,21 +326,49 @@ class MilestoneResource(Resource):
     @marshal_with(milestone_fields)
     def post(self):
         args = milestone_parser.parse_args()
+        # Parse and store only the date part of the deadline
+        deadline = datetime.fromisoformat(args['deadline']).date() if args['deadline'] else None
+        
         milestone = Milestone(
             milestone_number=args['milestone_number'],
             project_id=args['project_id'],
-            deadline=datetime.fromisoformat(args['deadline']) if args['deadline'] else None,
+            deadline=deadline,  # Storing only the date part
             description=args['description']
         )
+        
         db.session.add(milestone)
         db.session.commit()
         return milestone, 201
+    
+    @marshal_with(milestone_fields)
+    def put(self, milestone_id):
+        args = milestone_parser.parse_args()
+        milestone = Milestone.query.get_or_404(milestone_id)
+        
+        # Update milestone fields based on input
+        milestone.milestone_number = args['milestone_number'] if args['milestone_number'] is not None else milestone.milestone_number
+        milestone.project_id = args['project_id'] if args['project_id'] is not None else milestone.project_id
+        milestone.deadline = datetime.fromisoformat(args['deadline']).date() if args['deadline'] else milestone.deadline
+        milestone.description = args['description'] if args['description'] else milestone.description
+        
+        db.session.commit()
+        return milestone, 200
 
     def delete(self, milestone_id):
         milestone = Milestone.query.get_or_404(milestone_id)
         db.session.delete(milestone)
         db.session.commit()
         return {'message': 'Milestone deleted successfully'}, 204
+
+class MilestoneListResource(Resource):
+    @marshal_with(milestone_fields)
+    def get(self):
+        project_id = request.args.get('project_id', type=int)
+        if project_id:
+            milestones = Milestone.query.filter_by(project_id=project_id).all()
+            return milestones
+        milestones = Milestone.query.all()
+        return milestones
 
 class MilestoneSubmitResource(Resource):
     @marshal_with(milestone_submit_fields)
@@ -393,6 +421,7 @@ api.add_resource(EnrollmentResource, '/enrollments', '/enrollments/<int:enrollme
 api.add_resource(TAAllocationResource, '/ta_allocations', '/ta_allocations/<int:allocation_id>')
 api.add_resource(ProjectSubmitResource, '/project_submits', '/project_submits/<int:submission_id>')
 api.add_resource(MilestoneResource, '/milestones', '/milestones/<int:milestone_id>')
+api.add_resource(MilestoneListResource, '/milestones_list')
 api.add_resource(MilestoneSubmitResource, '/milestone_submits', '/milestone_submits/<int:submission_id>')
 api.add_resource(ProjectTeamResource, '/projects/<int:project_id>/teams')
 api.add_resource(EnrollmentCheckResource, '/projects/<int:project_id>/enrollments/<int:student_id>')

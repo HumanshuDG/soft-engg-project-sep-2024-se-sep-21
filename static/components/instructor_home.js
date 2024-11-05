@@ -181,7 +181,7 @@ export default {
               <ul class="list-group mb-3">
                 <li class="list-group-item" v-for="milestone in currentProject.milestones" :key="milestone.id">
                   <div>
-                    <strong>{{ milestone.name }}</strong> (Due: {{ milestone.due_date | formatDate }})
+                    <strong>Milestone {{ milestone.milestone_number }}</strong> (Due: {{ milestone.deadline }})
                     <button class="btn btn-warning btn-sm float-end" @click="openEditMilestoneModal(milestone)">Edit</button>
                     <button class="btn btn-danger btn-sm float-end me-2" @click="confirmDeleteMilestone(milestone)">Delete</button>
                   </div>
@@ -192,8 +192,8 @@ export default {
               <h6>Add New Milestone:</h6>
               <form @submit.prevent="createMilestone">
                 <div class="mb-3">
-                  <label for="milestoneName" class="form-label">Milestone Name</label>
-                  <input type="text" class="form-control" id="milestoneName" v-model="milestoneName" required />
+                  <label for="milestone_number" class="form-label">Milestone Number</label>
+                  <input type="number" class="form-control" id="milestone_number" v-model="milestone_number" required />
                 </div>
                 <div class="mb-3">
                   <label for="milestoneDescription" class="form-label">Description</label>
@@ -211,7 +211,7 @@ export default {
       </div>
 
 
-      <!-- Delete Confirmation Modal -->
+      <!-- Delete Project Confirmation Modal -->
       <div class="modal fade show" v-if="deleteModalVisible" tabindex="-1" role="dialog" aria-labelledby="deleteConfirmationLabel" aria-hidden="false" style="display: block;">
         <div class="modal-dialog">
           <div class="modal-content">
@@ -260,6 +260,7 @@ export default {
       currentProject: {}, // Store current project data
       milestones: [], // Store the milestones for the current project
       milestoneName: '', // Name of the new milestone
+      milestone_number: '',
       milestoneDescription: '', // Description of the new milestone
       milestoneDueDate: '', // Due date for the new milestone
       currentMilestoneId: null, // Track current milestone ID for editing
@@ -342,7 +343,7 @@ export default {
   
     async fetchMilestones(projectId) {
       try {
-        const response = await fetch(`/api/milestones?project_id=${projectId}`);
+        const response = await fetch(`/api/milestones_list?project_id=${projectId}`);
         if (response.ok) {
           const milestones = await response.json();
           const project = this.projects.find(p => p.id === projectId);
@@ -357,12 +358,19 @@ export default {
       }
     },
   
-    openMilestoneModal(project) {
+    async openMilestoneModal(project) {
       this.currentProject = project;
+      this.milestone_number = '';
       this.milestoneName = '';
       this.milestoneDescription = '';
       this.milestoneDueDate = '';
+    
+      // Fetch milestones for the selected project before opening the modal
+      await this.fetchMilestones(project.id);
+      
+      // Set milestones for display in the modal
       this.milestones = project.milestones || [];
+      
       this.milestoneModalVisible = true;
     },
   
@@ -374,8 +382,9 @@ export default {
     async createMilestone() {
       const milestoneData = {
         name: this.milestoneName,
+        milestone_number : this.milestone_number,
         description: this.milestoneDescription,
-        due_date: this.milestoneDueDate,
+        deadline: this.milestoneDueDate,
         project_id: this.currentProject.id,
       };
   
