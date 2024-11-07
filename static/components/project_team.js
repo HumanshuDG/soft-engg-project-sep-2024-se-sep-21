@@ -1,7 +1,11 @@
 export default {
   template: `
     <div id="team-details" class="container mt-4">
-      <h2 class="mb-4 text-center">Team Details</h2>
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="text-center">Team Details</h2>
+        <!-- New GenAI Button -->
+        <button class="btn btn-secondary" @click="goToGenAI(team.id)">GenAI</button>
+      </div>
       
       <div v-if="team">
         <!-- Team Information Card -->
@@ -126,6 +130,9 @@ export default {
     this.fetchTeamDetails(teamId);
   },
   methods: {
+    goToGenAI(teamId) {
+      this.$router.push({ name: 'gen_ai', params: { teamId } });
+    },
     async fetchTeamDetails(teamId) {
       try {
         const response = await fetch(`/api/teams/${teamId}`);
