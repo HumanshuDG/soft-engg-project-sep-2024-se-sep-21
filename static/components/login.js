@@ -58,35 +58,66 @@ export default {
     }
   },
   template: `
-    <div class="d-flex justify-content-center" style="margin-top: 15vh">
-      <div class="p-5 bg-light rounded border" style="min-width: 400px; max-width: 400px; border-radius: 10px; border: 1px solid #ccc;">
+    <div>
+      <!-- Login Form -->
+      <section class="vh-100 d-flex align-items-center" style="background-color: #f5f5f5;">
+        <div class="container h-100">
+          <div class="row d-flex justify-content-center align-items-center h-100">
+            <div class="col-lg-12 col-xl-11">
+              <div class="card text-black" style="border-radius: 25px; border: none; background-color: #ffe6e6;">
+                <div class="card-body p-md-5">
+                  <div class="row justify-content-center">
+                    <div class="col-md-10 col-lg-6 col-xl-5">
 
-        <!-- Centered Sign-in Title with a line below -->
-        <h1 class="text-center">Login</h1>
-        <hr />
+                      <!-- Error Message -->
+                      <p v-if="errorMessage" style="color: red;" class="mt-2 text-center">{{ errorMessage }}</p>
 
-        <!-- Email Input -->
-        <div class="mb-3">
-          <label for="user-email" class="form-label">Email Address</label>
-          <input type="email" class="form-control" id="user-email" placeholder="name@email.com" v-model="email">
+                      <!-- Centered Login Title -->
+                      <p class="text-center h1 fw-bold mb-5 mx-1 mx-md-4 mt-4">Login</p>
+
+                      <form @submit.prevent="login" class="mx-1 mx-md-4">
+
+                        <!-- Email Input -->
+                        <div class="d-flex flex-row align-items-center mb-4">
+                          <i class="fas fa-envelope fa-lg me-3 fa-fw"></i>
+                          <div class="form-outline flex-fill mb-0">
+                            <label class="form-label" for="user-email">Your Email</label>
+                            <input type="email" id="user-email" class="form-control" v-model="email" required style="background-color: #f5f5f5;" />
+                          </div>
+                        </div>
+
+                        <!-- Password Input -->
+                        <div class="d-flex flex-row align-items-center mb-4">
+                          <i class="fas fa-lock fa-lg me-3 fa-fw"></i>
+                          <div class="form-outline flex-fill mb-0">
+                            <label class="form-label" for="password">Password</label>
+                            <input type="password" id="password" class="form-control" v-model="password" required style="background-color: #f5f5f5;" />
+                          </div>
+                        </div>
+
+                        <!-- Login Button -->
+                        <div class="d-flex justify-content-center mx-4 mb-3 mb-lg-4">
+                          <button type="submit" class="btn btn-primary btn-lg w-100">Login</button>
+                        </div>
+
+                        <hr style="margin: 0.2rem 0.2;" />
+
+                        <!-- Register Button -->
+                        <div class="text-center">
+                          <button class="btn btn-warning w-100 mt-1" @click="goToRegister">Create a new account</button>
+                        </div>
+                      </form>
+                    </div>
+                    <div class="col-md-10 col-lg-6 col-xl-7 d-flex align-items-center">
+                      <img src="static/images/login-image.jpg" alt="Login Image" class="img-fluid" style="object-fit: cover; height: auto; max-height: 400px;"/>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-
-        <!-- Password Input -->
-        <div class="mb-3">
-          <label for="password" class="form-label">Password</label>
-          <input type="password" class="form-control" id="password" v-model="password">
-        </div>
-
-        <!-- Buttons for Login and Signup -->
-        <div class="text-center">
-        <button class="btn btn-primary w-50 mt-3" @click="login"> Login </button>
-        </div>
-        <hr style="margin: 0.2rem 0.2;" />
-        <button class="btn btn-secondary w-100 mt-2" @click="goToRegister"> Create a new account </button>
-
-        <!-- Error Message -->
-        <p v-if="errorMessage" style="color: red;" class="mt-3 text-center">{{ errorMessage }}</p>
-      </div>
+      </section>
     </div>
   `,
 };

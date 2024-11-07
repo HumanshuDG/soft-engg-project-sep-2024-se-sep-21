@@ -55,24 +55,6 @@ export default {
   },
   template: `
     <div>
-      <!-- Navbar -->
-      <nav class="navbar navbar-expand-lg" style="background-color: grey;">
-        <a class="navbar-brand" href="/">My App</a>
-        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-          <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarNav">
-          <ul class="navbar-nav ml-auto">
-            <li class="nav-item">
-              <router-link to="/" class="btn btn-warning nav-link text-white">Home</router-link>
-            </li>
-            <li class="nav-item">
-              <router-link to="/login" class="btn btn-warning nav-link text-white">Login</router-link>
-            </li>
-          </ul>
-        </div>
-      </nav>
-
       <!-- Register Form -->
       <section class="vh-100" style="background-color: #f5f5f5;">
         <div class="container h-100">
