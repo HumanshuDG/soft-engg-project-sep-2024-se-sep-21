@@ -8,7 +8,7 @@ from application.resources import api
 
 # Hugging Face API details
 HF_MODEL_URL = "https://api-inference.huggingface.co/models/facebook/bart-large-cnn"
-HF_API_KEY = "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"  # Replace with your Hugging Face API token
+HF_API_KEY = ""  # Replace with your Hugging Face API token
 
 headers = {
     "Authorization": f"Bearer {HF_API_KEY}",
