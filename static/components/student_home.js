@@ -1,83 +1,122 @@
 export default {
   template: `
-    <div id="student-home" class="container mt-4">
-      <div class="row">
-        <div class="col-md-4">
-          <div class="card mb-4">
-            <div class="card-body text-center">
-              <img :src="student.avatar_url || 'https://via.placeholder.com/100'" 
-                   alt="GitHub Profile Photo" 
-                   class="profile-photo rounded-circle mb-3" 
-                   style="width: 100px; height: 100px;" />
-              <h5 class="card-title">{{ student.name }}</h5>
-              <p class="card-text">GitHub: {{ student.github_id }}</p>
-              <p class="card-text">Email: {{ student.email }}</p>
+    <div>
+      <div id="student-home" class="container mt-4">
+        <div class="row">
+          <div class="col-md-4">
+            <div class="card mb-4">
+              <div class="card-body text-center">
+                <img :src="student.avatar_url || 'https://via.placeholder.com/100'" 
+                     alt="GitHub Profile Photo" 
+                     class="profile-photo rounded-circle mb-3" 
+                     style="width: 100px; height: 100px;" />
+                <h5 class="card-title">{{ student.name }}</h5>
+                <p class="card-text">GitHub: {{ student.github_id }}</p>
+                <p class="card-text">Email: {{ student.email }}</p>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div class="col-md-8">
-          <h2 class="greeting">Hello, {{ student.name }}! Here are the available projects:</h2>
-          <div class="row">
-            <div v-if="projects.length">
-              <div v-for="project in projects" :key="project.id" class="col-md-6 mb-4">
-                <div class="card project-card">
-                  <div class="card-body">
-                    <h5 class="card-title">{{ project.name }}</h5>
-                    <p class="card-text">{{ project.description }}</p>
-                    <p class="card-text"><strong>Min Team Size:</strong> {{ project.min_teammates }}</p>
-                    <p class="card-text"><strong>Max Team Size:</strong> {{ project.max_teammates }}</p>
-                    
-                    <!-- Team Cards -->
-                    <div class="mt-4">
-                      <h5>Teams Enrolled</h5>
-                      <div class="row">
-                        <div class="team-card card mb-3 p-3 col-md-4" 
-                             v-for="team in project.teams" :key="team.id">
-                          <h6>Team Name: {{ team.team_name }}</h6>
-                          <h6>Members:</h6>
-                          <ul>
-                            <li v-for="member in team.members" :key="member.id">{{ member.name }}</li>
-                          </ul>
+          <div class="col-md-8">
+            <h2 class="greeting">Hello, {{ student.name }}! Here are the available projects:</h2>
+            <div class="row">
+              <div v-if="projects.length">
+                <div v-for="project in projects" :key="project.id" class="col-md-6 mb-4">
+                  <div class="card project-card">
+                    <div class="card-body">
+                      <h5 class="card-title">{{ project.name }}</h5>
+                      <p class="card-text">{{ project.description }}</p>
+                      <p class="card-text"><strong>Min Team Size:</strong> {{ project.min_teammates }}</p>
+                      <p class="card-text"><strong>Max Team Size:</strong> {{ project.max_teammates }}</p>
+                      
+                      <!-- Team Cards -->
+                      <div class="mt-4">
+                        <h5>Teams Enrolled</h5>
+                        <div class="row">
+                          <div class="team-card card mb-3 p-3 col-md-4" 
+                               v-for="team in project.teams" :key="team.id">
+                            <h6>Team Name: {{ team.team_name }}</h6>
+                            <h6>Members:</h6>
+                            <ul>
+                              <li v-for="member in team.members" :key="member.id">{{ member.name }}</li>
+                            </ul>
 
-                          <!-- Flex container for buttons -->
-                          <div class="d-flex justify-content-between align-items-center mt-2">
-                            <button class="btn btn-primary" @click="viewTeam(team.id)">View Team</button>
-                            <div>
-                              <div v-if="!team.ta_id">
-                                <button class="btn btn-secondary" @click="openAssignTAModal(team.id)">Assign TA</button>
-                              </div>
-                              <div v-else>
-                                <h6 class="m-0">Assigned TA: {{ team.ta.name }}</h6>
+                            <!-- Flex container for buttons -->
+                            <div class="d-flex justify-content-between align-items-center mt-2">
+                              <button class="btn btn-primary" @click="viewTeam(team.id)">View Team</button>
+                              <div>
+                                <div v-if="!team.ta_id">
+                                  <button class="btn btn-secondary" @click="openAssignTAModal(team.id)">Assign TA</button>
+                                </div>
+                                <div v-else>
+                                  <h6 class="m-0">Assigned TA: {{ team.ta.name }}</h6>
+                                </div>
                               </div>
                             </div>
                           </div>
                         </div>
                       </div>
-                    </div>
 
-                    <div class="button-group">
-                      <button @click="viewProject(project.id)" class="btn btn-info me-2">View</button>
-                      <button 
-                        @click="openEnrollmentModal(project)" 
-                        class="btn btn-primary" 
-                        :disabled="isStudentEnrolledInProject(project.id)"
-                      >
-                        Enroll
-                      </button>
+                      <div class="button-group">
+                        <button @click="viewProject(project.id)" class="btn btn-info me-2">View</button>
+                        <button 
+                          @click="openEnrollmentModal(project)" 
+                          class="btn btn-primary" 
+                          :disabled="isStudentEnrolledInProject(project.id)"
+                        >
+                          Enroll
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
+              <div v-else>
+                <p>No projects available at the moment.</p>
+              </div>
             </div>
-            <div v-else>
-              <p>No projects available at the moment.</p>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Enrollment Modal -->
+      <div class="modal fade show" v-if="showEnrollmentModal" tabindex="-1" role="dialog" aria-labelledby="enrollmentModalLabel" aria-hidden="true" style="display: block;">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="enrollmentModalLabel">Enroll in Project</h5>
+              <button type="button" class="btn-close" @click="closeEnrollmentModal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <form @submit.prevent="submitEnrollment">
+                <div class="mb-3">
+                  <label for="repo" class="form-label">GitHub Repo URL</label>
+                  <input type="url" class="form-control" id="repo" v-model="repo" required />
+                </div>
+                <div class="mb-3">
+                  <label for="teamSelect" class="form-label">Select Team</label>
+                  <select id="teamSelect" class="form-select" v-model="selectedTeam" :disabled="!teams.length">
+                    <option v-if="teams.length" v-for="team in teams" :key="team.id" :value="team.id">{{ team.team_name }}</option>
+                    <option value="">Create New Team</option>
+                  </select>
+                  <div v-if="!teams.length" class="text-muted mt-2">
+                    No teams available. Please create a new team.
+                  </div>
+                </div>
+                <div v-if="selectedTeam === ''" class="mb-3">
+                  <label for="newTeamName" class="form-label">New Team Name</label>
+                  <input type="text" class="form-control" id="newTeamName" v-model="newTeamName" required />
+                </div>
+                <button type="submit" class="btn btn-success">Submit</button>
+              </form>
             </div>
           </div>
         </div>
       </div>
     </div>
   `,
+  // Component data, created lifecycle hook, and methods as in your original code
+
   data() {
     return {
       student: {},
