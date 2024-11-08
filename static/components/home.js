@@ -2,7 +2,7 @@ export default {
     name: 'Home',
     template: `
       <div style="
-        background-image: url('/static/img.png'); 
+        background-image: url('./static/images/img.png'); 
         height: 100vh; 
         background-size: cover; 
         background-position: center; 
