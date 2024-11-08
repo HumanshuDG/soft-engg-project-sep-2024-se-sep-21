@@ -31,7 +31,7 @@ export default {
                       
                       <!-- Team Cards -->
                       <div class="mt-4">
-                        <h5>Teams Enrolled</h5>
+                        <h5>Team Details</h5>
                         <div class="row">
                           <div class="team-card card mb-3 p-3 col-md-4" 
                                v-for="team in project.teams" :key="team.id">
@@ -58,7 +58,7 @@ export default {
                       </div>
 
                       <div class="button-group">
-                        <button @click="viewProject(project.id)" class="btn btn-info me-2">View</button>
+                        <button @click="viewProject(project.id)" class="btn btn-info me-2">Project Details</button>
                         <button 
                           @click="openEnrollmentModal(project)" 
                           class="btn btn-primary" 
