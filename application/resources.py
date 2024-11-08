@@ -63,17 +63,6 @@ user_fields = {
     'account_created': fields.DateTime,
 }
 
-project_fields = {
-    'id': fields.Integer,
-    'name': fields.String,
-    'creator_id': fields.Integer,
-    'created_on': fields.DateTime,
-    'deadline': fields.DateTime,
-    'max_teammates': fields.Integer,
-    'min_teammates': fields.Integer,
-    'description': fields.String,
-}
-
 team_fields = {
     'id': fields.Integer,
     'project_id': fields.Integer,
@@ -90,6 +79,19 @@ team_fields = {
         'ta': fields.Nested(user_fields)  # Assuming 'user_fields' has 'name'
     }))
 }
+
+project_fields = {
+    'id': fields.Integer,
+    'name': fields.String,
+    'creator_id': fields.Integer,
+    'created_on': fields.DateTime,
+    'deadline': fields.DateTime,
+    'max_teammates': fields.Integer,
+    'min_teammates': fields.Integer,
+    'description': fields.String,
+    'teams': fields.List(fields.Nested(team_fields)),
+}
+
 
 enrollment_fields = {
     'id': fields.Integer,
@@ -235,9 +237,21 @@ class TeamResource(Resource):
 
 class EnrollmentResource(Resource):
     @marshal_with(enrollment_fields)
-    def get(self, enrollment_id):
-        enrollment = Enrollment.query.get_or_404(enrollment_id)
-        return enrollment
+    def get(self, enrollment_id=None):
+        # Fetch enrollment by ID if provided
+        if enrollment_id is not None:
+            enrollment = Enrollment.query.get_or_404(enrollment_id)
+            return enrollment
+
+        # Otherwise, fetch all enrollments for a specific student_id
+        args = request.args  # to fetch query parameters
+        student_id = args.get('student_id')
+
+        if student_id:
+            enrollments = Enrollment.query.filter_by(student_id=student_id).all()
+            return enrollments  # Returns all enrollments for the given student_id
+        else:
+            return {'message': 'student_id is required'}, 400  # Return an error if student_id is not provided
 
     @marshal_with(enrollment_fields)
     def post(self):
@@ -272,6 +286,7 @@ class EnrollmentResource(Resource):
         db.session.delete(enrollment)
         db.session.commit()
         return {'message': 'Enrollment deleted successfully'}, 204
+
 
 class TAListResource(Resource):
     @marshal_with(user_fields)

@@ -51,7 +51,7 @@ export default {
       totalProjects: 0,
       totalTAs: 0,
       projects: [],
-      taAllocations: [],
+      availableTAs: [],
       milestones: [],
       instructorName: '',
     };
@@ -60,6 +60,7 @@ export default {
   created() {
     this.fetchDashboardData();
     this.fetchInstructorName();
+    this.fetchAvailableTAs();
   },
 
   methods: {
@@ -75,18 +76,25 @@ export default {
           this.generateTeamsEnrolledChart();
         }
 
-        // Fetch total number of TAs for the second chart
-        const taResponse = await fetch('/api/ta_allocations');
-        if (taResponse.ok) {
-          const taAllocations = await taResponse.json();
-          this.totalTAs = taAllocations.length;
-          this.taAllocations = taAllocations;
-          this.generateProjectsVsTAsChart();
-        }
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
       }
     },
+      // fetch available TAs
+      async fetchAvailableTAs() {
+        try {
+          const response = await fetch('/api/tas');
+          if (response.ok) {
+            this.availableTAs = await response.json(); // Assume response is an array of TAs
+            this.totalTAs = this.availableTAs.length; // Update the total number of TAs
+            this.generateProjectsVsTAsChart();
+          } else {
+            console.error('Error fetching TAs:', response.statusText);
+          }
+        } catch (error) {
+          console.error('Error fetching TAs:', error);
+        }
+      },
 
     // Generate the "No. of Teams Enrolled in Each Project" chart
     generateTeamsEnrolledChart() {
@@ -117,7 +125,7 @@ export default {
     // Generate the "No. of Projects vs No. of TAs" chart
     generateProjectsVsTAsChart() {
       const projectCounts = this.projects.length;
-      const taCounts = this.taAllocations.length;
+      const taCounts = this.availableTAs.length;
 
       const ctx = document.getElementById('projectsVsTAsChart').getContext('2d');
       new Chart(ctx, {

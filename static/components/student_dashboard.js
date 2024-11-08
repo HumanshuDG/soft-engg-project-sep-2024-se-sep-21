@@ -74,21 +74,27 @@ export default {
               const enrollments = await enrollmentsResponse.json();
               this.enrolledProjects = enrollments.map(enrollment => enrollment.project_id);
               this.totalEnrolledProjects = this.enrolledProjects.length;
-              this.generateProjectProgressChart();
             }
           }
-  
+      
+          // Fetch project details (names, completion percentages) for each enrolled project
+          const projectsResponse = await fetch(`/api/projects`);
+          if (projectsResponse.ok) {
+            this.projects = await projectsResponse.json();
+            this.generateProjectProgressChart(); // Call this after projects are fetched
+          }
+      
           // Fetch milestones and calculate stats
           const milestonesResponse = await fetch(`/api/milestones?student_id=${userId}`);
           if (milestonesResponse.ok) {
             const milestones = await milestonesResponse.json();
             this.milestones = milestones;
-  
+      
             // Calculate completed and pending milestones
             this.projectsCompleted = milestones.filter(milestone => milestone.completed).length;
             this.pendingMilestones = milestones.filter(milestone => !milestone.completed).length;
           }
-  
+      
           // Fetch total number of TAs for the second chart
           const taResponse = await fetch('/api/ta_allocations');
           if (taResponse.ok) {
@@ -100,6 +106,7 @@ export default {
           console.error('Error fetching dashboard data:', error);
         }
       },
+      
   
       // Generate the "Project Progress" chart
       generateProjectProgressChart() {
