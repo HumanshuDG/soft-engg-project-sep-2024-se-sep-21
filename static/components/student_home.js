@@ -3,7 +3,7 @@ export default {
     <div>
       <div id="student-home" class="container mt-4">
         <div class="row">
-          <div class="col-md-4">
+          <div class="col-12 col-md-4">
             <div class="card mb-4">
               <div class="card-body text-center">
                 <img :src="student.avatar_url || 'https://via.placeholder.com/100'" 
@@ -17,12 +17,12 @@ export default {
             </div>
           </div>
 
-          <div class="col-md-8">
+          <div class="col-12 col-md-8">
             <h2 class="greeting">Hello, {{ student.name }}! Here are the available projects:</h2>
             <div class="row">
               <div v-if="projects.length">
-                <div v-for="project in projects" :key="project.id" class="col-md-6 mb-4">
-                  <div class="card project-card">
+                <div v-for="project in projects" :key="project.id" class="col-12 col-md-6 mb-4">
+                  <div class="card project-card" style="max-width: 100%;">
                     <div class="card-body">
                       <h5 class="card-title">{{ project.name }}</h5>
                       <p class="card-text">{{ project.description }}</p>
@@ -33,8 +33,8 @@ export default {
                       <div class="mt-4">
                         <h5>Team Details</h5>
                         <div class="row">
-                          <div class="team-card card mb-3 p-3 col-md-4" 
-                               v-for="team in project.teams" :key="team.id">
+                          <div class="team-card card mb-3 p-3 col-12 col-md-6" 
+                               v-for="team in project.teams" :key="team.id" style="max-width: 100%;">
                             <h6>Team Name: {{ team.team_name }}</h6>
                             <h6>Members:</h6>
                             <ul>
@@ -43,13 +43,20 @@ export default {
 
                             <!-- Flex container for buttons -->
                             <div class="d-flex justify-content-between align-items-center mt-2">
-                              <button class="btn btn-primary" @click="viewTeam(team.id)">View Team</button>
+                              <button class="btn btn-primary btn-sm" @click="viewTeam(team.id)">View Team</button>
+                              <!-- Conditional Display for Assign TA -->
                               <div>
-                                <div v-if="!team.ta_id">
-                                  <button class="btn btn-secondary" @click="openAssignTAModal(team.id)">Assign TA</button>
+                                <div v-if="!team.ta_allocations || team.ta_allocations.length === 0">
+                                  <!-- If no TA is assigned, show the 'TA Not Assigned' message in red -->
+                                  <p style="color: red; font-weight: bold;">TA Not Assigned</p>
                                 </div>
                                 <div v-else>
-                                  <h6 class="m-0">Assigned TA: {{ team.ta.name }}</h6>
+                                  <!-- If a TA is assigned, display the assigned TA's name in a styled manner -->
+                                  <div class="assigned-ta-info">
+                                    <h6 class="m-0" style="color: #4caf50; font-weight: bold;">
+                                      Assigned TA: {{ team.ta_allocations[0].ta.name }}
+                                    </h6>
+                                  </div>
                                 </div>
                               </div>
                             </div>
@@ -57,11 +64,12 @@ export default {
                         </div>
                       </div>
 
-                      <div class="button-group">
-                        <button @click="viewProject(project.id)" class="btn btn-info me-2">Project Details</button>
+                      <!-- Button Group with Flex Wrap -->
+                      <div class="d-flex flex-wrap mt-3">
+                        <button @click="viewProject(project.id)" class="btn btn-info me-2 mb-2">Project Details</button>
                         <button 
                           @click="openEnrollmentModal(project)" 
-                          class="btn btn-primary" 
+                          class="btn btn-primary mb-2" 
                           :disabled="isStudentEnrolledInProject(project.id)"
                         >
                           Enroll
@@ -81,7 +89,7 @@ export default {
       
       <!-- Enrollment Modal -->
       <div class="modal fade show" v-if="showEnrollmentModal" tabindex="-1" role="dialog" aria-labelledby="enrollmentModalLabel" aria-hidden="true" style="display: block;">
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
           <div class="modal-content">
             <div class="modal-header">
               <h5 class="modal-title" id="enrollmentModalLabel">Enroll in Project</h5>

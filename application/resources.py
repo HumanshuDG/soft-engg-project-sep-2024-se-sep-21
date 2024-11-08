@@ -1,6 +1,6 @@
 from flask_restful import Api, Resource, reqparse, fields, marshal_with, request
 from datetime import datetime
-from application.models import db, User, Role, Project, Team, TeamMember, Enrollment, TAAllocation, ProjectSubmit, Milestone, MilestoneSubmit
+from application.models import db, User, Role, roles_users, Project, Team, TeamMember, Enrollment, TAAllocation, ProjectSubmit, Milestone, MilestoneSubmit
 
 # Initialize the API
 api = Api(prefix="/api")
@@ -84,6 +84,10 @@ team_fields = {
         'id': fields.Integer,
         'user_id': fields.Integer,      # User ID for each team member
         'name': fields.String(attribute='user.name')  # Pull member names
+    })),
+    'ta_allocations': fields.List(fields.Nested({
+        'id': fields.Integer,
+        'ta': fields.Nested(user_fields)  # Assuming 'user_fields' has 'name'
     }))
 }
 
@@ -269,7 +273,13 @@ class EnrollmentResource(Resource):
         db.session.commit()
         return {'message': 'Enrollment deleted successfully'}, 204
 
-
+class TAListResource(Resource):
+    @marshal_with(user_fields)
+    def get(self):
+        # Fetch TAs who have the role of 'TA'
+        tas = User.query.join(roles_users).join(Role).filter(Role.name == 'TA').all()
+        return tas
+    
 class TAAllocationResource(Resource):
     @marshal_with(ta_allocation_fields)
     def get(self, allocation_id):
@@ -426,3 +436,4 @@ api.add_resource(MilestoneListResource, '/milestones_list')
 api.add_resource(MilestoneSubmitResource, '/milestone_submits', '/milestone_submits/<int:submission_id>')
 api.add_resource(ProjectTeamResource, '/projects/<int:project_id>/teams')
 api.add_resource(EnrollmentCheckResource, '/projects/<int:project_id>/enrollments/<int:student_id>')
+api.add_resource(TAListResource, '/tas')

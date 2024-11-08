@@ -47,14 +47,17 @@ export default {
                     <button class="btn btn-primary" @click="viewTeam(team.id)">View Team</button>
 
                     <!-- Conditional Display for Assign TA -->
-                    <div>
-                      <div v-if="team.ta_id == null">
-                        <button class="btn btn-secondary" @click="openAssignTAModal(team.id)">Assign TA</button>
+                      <div>
+                        <div v-if="!team.ta_allocations || team.ta_allocations.length === 0">
+                          <!-- If no TA is assigned, show the 'Assign TA' button -->
+                          <button class="btn btn-secondary" @click="openAssignTAModal(team.id)">Assign TA</button>
+                        </div>
+                        <div v-else>
+                          <!-- If a TA is assigned, display the assigned TA's name -->
+                          <h6 class="m-0">Assigned TA: {{ team.ta_allocations[0].ta.name }}</h6>
+                        </div>
                       </div>
-                      <div v-else>
-                        <h6 class="m-0">Assigned TA: {{ team.ta.name }}</h6>
-                      </div>
-                    </div>
+
                   </div>
                 </div>
               </div>
@@ -306,23 +309,31 @@ export default {
   
     async assignTA(taId) {
       try {
-        const response = await fetch(`/api/teams/${this.selectedTeamId}/assign-ta`, {
-          method: 'PUT',
+        // Set up the payload with the TA and team ID
+        const payload = {
+          ta_id: taId,
+          team_id: this.selectedTeamId,
+        };
+
+        // Send a POST request to assign the TA
+        const response = await fetch('/api/ta_allocations', {
+          method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ ta_id: taId }),
+          body: JSON.stringify(payload),
         });
-        
+
         if (response.ok) {
-          const updatedTeam = await response.json();
-          this.$emit('update-team', updatedTeam); // Emitting the updated team to parent for reactivity
-          this.closeAssignTAModal();
+          // If successful, handle the response as needed (e.g., close the modal or update the UI)
+          alert("TA assigned successfully!");
+          this.closeAssignTAModal();  // Close modal
+          this.fetchAvailableTAs();   // Refresh available TAs if needed
         } else {
-          console.error('Failed to assign TA');
+          console.error("Failed to assign TA.");
         }
       } catch (error) {
-        console.error('Error assigning TA:', error);
+        console.error("An error occurred:", error);
       }
     },
     
