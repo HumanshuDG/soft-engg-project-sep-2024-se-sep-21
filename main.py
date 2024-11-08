@@ -30,6 +30,7 @@ def create_app():
 
     with app.app_context():
         import application.views  # Import views or other components here
+        db.create_all()
 
     return app
 
