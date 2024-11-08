@@ -82,6 +82,7 @@ team_fields = {
     'created_on': fields.DateTime,
     'members': fields.List(fields.Nested({
         'id': fields.Integer,
+        'user_id': fields.Integer,      # User ID for each team member
         'name': fields.String(attribute='user.name')  # Pull member names
     }))
 }
