@@ -54,7 +54,9 @@ export default {
                         </div>
                         <div v-else>
                           <!-- If a TA is assigned, display the assigned TA's name -->
-                          <h6 class="m-0">Assigned TA: {{ team.ta_allocations[0].ta.name }}</h6>
+                                <h6 class="m-0" style="color: #4caf50; font-weight: bold;">
+                                      Assigned TA: {{ team.ta_allocations[0].ta.name }}
+                                </h6>
                         </div>
                       </div>
 

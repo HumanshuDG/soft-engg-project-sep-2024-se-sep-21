@@ -2,7 +2,9 @@ export default {
     template: `
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
       <div class="container-fluid">
-        <router-link class="navbar-brand" to="#">Home</router-link>
+        <div class="navbar-brand">
+          <img src="static/images/logo.png" alt="Logo" style="height: 30px; width: auto;" />
+        </div>
         <button
           class="navbar-toggler"
           type="button"
@@ -20,11 +22,23 @@ export default {
               <router-link class="nav-link" to="/notifications"><i class="fa-solid fa-bell"></i> Notification</router-link>
               
             </li>
-            <li class="nav-item">
-              <router-link class="nav-link" to="/projects">Project</router-link>
+            <li class="nav-item" v-if="role=='instructor'">
+              <router-link class="nav-link" to="/instructor_home">Projects</router-link>
             </li>
-            <li class="nav-item">
-              <router-link class="nav-link" to="/dashboard">Dashboard</router-link>
+            <li class="nav-item" v-if="role=='student'">
+              <router-link class="nav-link" to="/student_home">Projects</router-link>
+            </li>
+            <li class="nav-item" v-if="role=='TA'">
+              <router-link class="nav-link" to="/ta_home">Projects</router-link>
+            </li>
+            <li class="nav-item" v-if="role=='instructor'">
+              <router-link class="nav-link" to="/instructor_dashboard">Dashboard</router-link>
+            </li>
+            <li class="nav-item" v-if="role=='student'">
+              <router-link class="nav-link" to="/student_dashboard">Dashboard</router-link>
+            </li>
+            <li class="nav-item" v-if="role=='TA'">
+              <router-link class="nav-link" to="/ta_dashboard">Dashboard</router-link>
             </li>
             <li class="nav-item" v-if="is_login">
               <button class="nav-link btn btn-link text-danger" @click="logout">
