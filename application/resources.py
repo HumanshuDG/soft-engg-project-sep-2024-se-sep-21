@@ -7,10 +7,10 @@ api = Api(prefix="/api")
 
 # Parsers for each model
 user_parser = reqparse.RequestParser()
-user_parser.add_argument('github_id', type=str)
-user_parser.add_argument('name', type=str, required=True)
-user_parser.add_argument('email', type=str, required=True)
-user_parser.add_argument('password', type=str, required=True)
+user_parser.add_argument('name', type=str, location='json', required=False, help="Name of the user")
+user_parser.add_argument('github_id', type=str, location='json', required=False, help="GitHub ID of the user")
+user_parser.add_argument('email', type=str, location='json', required=False, help="Email of the user")
+user_parser.add_argument('password', type=str, location='json', required=False, help="Password of the user")
 
 project_parser = reqparse.RequestParser()
 project_parser.add_argument('name', type=str, required=True)
@@ -158,6 +158,20 @@ class UserResource(Resource):
         db.session.delete(user)
         db.session.commit()
         return {'message': 'User deleted successfully'}, 204
+    @marshal_with(user_fields)
+    def put(self, user_id):
+        user = User.query.get_or_404(user_id)
+        args = user_parser.parse_args()
+
+        # Update the fields with the new values
+        user.username = args['name']
+        user.github_id = args['github_id']
+
+        # Commit the changes to the database
+        db.session.commit()
+
+        # Return the updated user
+        return user
 
 # Project Resource
 class ProjectResource(Resource):
