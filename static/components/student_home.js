@@ -25,9 +25,6 @@ export default {
                   <div class="card project-card" style="max-width: 100%;">
                     <div class="card-body">
                       <h5 class="card-title">{{ project.name }}</h5>
-                      <p class="card-text">{{ project.description }}</p>
-                      <p class="card-text"><strong>Min Team Size:</strong> {{ project.min_teammates }}</p>
-                      <p class="card-text"><strong>Max Team Size:</strong> {{ project.max_teammates }}</p>
                       
                       <!-- Team Cards -->
                       <div class="mt-4">
@@ -70,7 +67,7 @@ export default {
 
                       <!-- Button Group with Flex Wrap -->
                       <div class="d-flex flex-wrap mt-3">
-                        <button @click="viewProject(project.id)" class="btn btn-info me-2 mb-2">Project Details</button>
+                        <button @click="viewProjectDetails(project)" class="btn btn-info me-2 mb-2">Project Details</button>
                         <button 
                           @click="openEnrollmentModal(project)" 
                           class="btn btn-primary mb-2" 
@@ -125,6 +122,26 @@ export default {
           </div>
         </div>
       </div>
+
+      <!-- Project Details Modal -->
+      <div class="modal fade show" v-if="showProjectDetailsModal" tabindex="-1" role="dialog" aria-labelledby="projectDetailsModalLabel" aria-hidden="true" style="display: block;">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="projectDetailsModalLabel">{{ selectedProject.name }}</h5>
+              <button type="button" class="btn-close" @click="closeProjectDetailsModal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <p><strong>Description:</strong> {{ selectedProject.description }}</p>
+              <p><strong>Min Team Size:</strong> {{ selectedProject.min_teammates }}</p>
+              <p><strong>Max Team Size:</strong> {{ selectedProject.max_teammates }}</p>
+              <p><strong>Deadline:</strong> {{ selectedProject.deadline }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
     </div>
   `,
   // Component data, created lifecycle hook, and methods as in your original code
@@ -138,7 +155,8 @@ export default {
       selectedTeam: '',
       teams: [],
       newTeamName: '',
-      selectedProject: null
+      selectedProject: null,
+      showProjectDetailsModal: false,
     };
   },
   created() {
@@ -285,6 +303,15 @@ export default {
       } catch (error) {
         console.error("Error enrolling:", error);
       }
+    },
+
+    viewProjectDetails(project) {
+      this.selectedProject = project;
+      this.showProjectDetailsModal = true;
+    },
+    closeProjectDetailsModal() {
+      this.showProjectDetailsModal = false;
+      this.selectedProject = null;
     },
   }
 };
