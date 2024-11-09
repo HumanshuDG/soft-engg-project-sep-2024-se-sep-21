@@ -94,8 +94,13 @@ export default {
                       <p v-if="errorMessage" style="color: red;" class="mt-2 text-center">{{ errorMessage }}</p>
                       <p v-if="successMessage" style="color: green;" class="mt-2 text-center">{{ successMessage }}</p>
 
-                      <!-- Centered Register Title -->
-                      <p class="text-center h1 fw-bold mb-5 mx-1 mx-md-4 mt-4">Sign up</p>
+                      <!-- Sign up Title and Already Have an Account Button -->
+                      <div class="d-flex justify-content-between align-items-center">
+                        <p class="text-center h1 fw-bold mb-4 mx-1 mx-md-4 mt-4">Sign up</p>
+                          <div class="text-center">
+                          <button class="btn btn-success w-100 mt-1" @click="goToLogin">have an account?</button>
+                        </div>
+                      </div>
 
                       <form @submit.prevent="register" class="mx-1 mx-md-4">
                         <!-- Role Selection Field -->
@@ -151,13 +156,6 @@ export default {
                         <!-- Register Button -->
                         <div class="d-flex justify-content-center mx-4 mb-3 mb-lg-4">
                           <button type="submit" class="btn btn-primary btn-lg">Sign-up</button>
-                        </div>
-
-                        <hr style="margin: 0.2rem 0.2;" />
-
-                        <!-- Login Button -->
-                        <div class="text-center">
-                          <button class="btn btn-warning w-100 mt-1" @click="goToLogin">Already have an account?</button>
                         </div>
                       </form>
                     </div>

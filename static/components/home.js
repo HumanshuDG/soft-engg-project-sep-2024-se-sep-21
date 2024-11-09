@@ -62,7 +62,7 @@ export default {
             <li>Collaborate with team members</li>
             <li>Get feedback from instructors</li>
           </ul>
-          <router-link to="/signup">
+          <div>
             <button style="
               padding: 10px 20px; 
               font-size: 16px; 
@@ -72,10 +72,10 @@ export default {
               border-radius: 5px; 
               cursor: pointer; 
               margin-top: 20px;
-            ">
+            " @click="goToRegister">
               Get Started
             </button>
-          </router-link>
+          </div>
         </div>
       </div>
       

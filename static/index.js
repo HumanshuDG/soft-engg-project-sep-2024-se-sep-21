@@ -9,7 +9,7 @@ router.beforeEach((to, from, next) => {
   if (to.name === 'login' || to.name === 'signup' || to.name === 'homepage') {
     next();
   } 
-  // Redirect to login page if not authenticated
+  // Redirect to login page if not authenticated and trying to access protected pages
   else if (!localStorage.getItem('Authentication-Token')) {
     alert('You must log in to access this page.');
     next({ name: 'login' });
@@ -19,6 +19,7 @@ router.beforeEach((to, from, next) => {
     next();
   }
 });
+
 
 
 // Initializing new Vue app
