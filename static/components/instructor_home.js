@@ -16,7 +16,7 @@ export default {
               <h4 class="mb-0">{{ project.name }}</h4>
               <div>
                 <button class="btn btn-success me-2" @click="openEditModal(project)">Edit</button>
-                <button class="btn btn-danger" @click="confirmDeleteProject(project)">Delete</button>
+                
               </div>
             </div>
             <div class="row mt-3">
