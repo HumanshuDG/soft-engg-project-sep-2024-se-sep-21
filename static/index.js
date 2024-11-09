@@ -2,8 +2,9 @@ import router from './router.js';
 import Navbar from './components/navbar.js';
 
 // Route Guard
+
 router.beforeEach((to, from, next) => {
-  // Allow access to login, signup, and homepage
+  // Allow access to login, signup, and homepage without authentication
   if (to.name === 'login' || to.name === 'signup' || to.name === 'homepage') {
     next();
   } 
@@ -17,6 +18,7 @@ router.beforeEach((to, from, next) => {
     next();
   }
 });
+
 
 // Initializing new Vue app
 new Vue({
