@@ -28,22 +28,22 @@ export default {
               </router-link>
             </li>
             <li class="nav-item" v-if="role == 'instructor'">
-              <router-link class="nav-link" to="/instructor_home">Projects</router-link>
+              <router-link class="nav-link" to="/instructor_home"><i class="fa-solid fa-diagram-project"></i>Projects</router-link>
             </li>
             <li class="nav-item" v-if="role == 'student'">
-              <router-link class="nav-link" to="/student_home">Projects</router-link>
+              <router-link class="nav-link" to="/student_home"><i class="fa-solid fa-diagram-project"></i>Projects</router-link>
             </li>
             <li class="nav-item" v-if="role == 'TA'">
-              <router-link class="nav-link" to="/ta_home">Projects</router-link>
+              <router-link class="nav-link" to="/ta_home"><i class="fa-solid fa-diagram-project"></i>Projects</router-link>
             </li>
             <li class="nav-item" v-if="role == 'instructor'">
-              <router-link class="nav-link" to="/instructor_dashboard">Dashboard</router-link>
+              <router-link class="nav-link" to="/instructor_dashboard"><i class="fa-solid fa-chart-line"></i>Dashboard</router-link>
             </li>
             <li class="nav-item" v-if="role == 'student'">
-              <router-link class="nav-link" to="/student_dashboard">Dashboard</router-link>
+              <router-link class="nav-link" to="/student_dashboard"><i class="fa-solid fa-chart-line"></i>Dashboard</router-link>
             </li>
             <li class="nav-item" v-if="role == 'TA'">
-              <router-link class="nav-link" to="/ta_dashboard">Dashboard</router-link>
+              <router-link class="nav-link" to="/ta_dashboard"><i class="fa-solid fa-chart-line"></i>Dashboard</router-link>
             </li>
             <li class="nav-item" v-if="is_login">
               <button class="nav-link btn btn-link text-danger" @click="logout">

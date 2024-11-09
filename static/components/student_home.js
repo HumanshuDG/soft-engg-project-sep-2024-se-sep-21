@@ -6,13 +6,43 @@ export default {
           <div class="col-12 col-md-4">
             <div class="card mb-4">
               <div class="card-body text-center">
-                <img :src="student.avatar_url || 'https://via.placeholder.com/100'" 
+                <img :src="avatarUrl"
                      alt="GitHub Profile Photo" 
                      class="profile-photo rounded-circle mb-3" 
                      style="width: 100px; height: 100px;" />
-                <h5 class="card-title">{{ student.name }}</h5>
+                          <h5 class="card-title">
+                            {{ student.name }}
+                            <button class="btn btn-sm btn-link" @click="openUpdateModal">
+                              <i class="fa-solid fa-pencil"></i>
+                            </button>
+                          </h5>
                 <p class="card-text">GitHub: {{ student.github_id }}</p>
                 <p class="card-text">Email: {{ student.email }}</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Update Modal for Name and GitHub ID -->
+          <div class="modal fade show" v-if="showUpdateModal" tabindex="-1" role="dialog" aria-labelledby="updateModalLabel" aria-hidden="true" style="display: block;">
+            <div class="modal-dialog modal-dialog-centered">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title" id="updateModalLabel">Update Name and GitHub ID</h5>
+                  <button type="button" class="btn-close" @click="closeUpdateModal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                  <form @submit.prevent="submitUpdate">
+                    <div class="mb-3">
+                      <label for="newName" class="form-label">New Name</label>
+                      <input type="text" class="form-control" id="newName" v-model="newName" required />
+                    </div>
+                    <div class="mb-3">
+                      <label for="newGitHubId" class="form-label">New GitHub ID</label>
+                      <input type="text" class="form-control" id="newGitHubId" v-model="newGitHubId" required />
+                    </div>
+                    <button type="submit" class="btn btn-success">Update</button>
+                  </form>
+                </div>
               </div>
             </div>
           </div>
@@ -25,9 +55,6 @@ export default {
                   <div class="card project-card" style="max-width: 100%;">
                     <div class="card-body">
                       <h5 class="card-title">{{ project.name }}</h5>
-                      <p class="card-text">{{ project.description }}</p>
-                      <p class="card-text"><strong>Min Team Size:</strong> {{ project.min_teammates }}</p>
-                      <p class="card-text"><strong>Max Team Size:</strong> {{ project.max_teammates }}</p>
                       
                       <!-- Team Cards -->
                       <div class="mt-4">
@@ -70,14 +97,16 @@ export default {
 
                       <!-- Button Group with Flex Wrap -->
                       <div class="d-flex flex-wrap mt-3">
-                        <button @click="viewProject(project.id)" class="btn btn-info me-2 mb-2">Project Details</button>
+                        <button @click="viewProjectDetails(project)" class="btn btn-info me-2 mb-2">Project Details</button>
                         <button 
-                          @click="openEnrollmentModal(project)" 
-                          class="btn btn-primary mb-2" 
-                          :disabled="isStudentEnrolledInProject(project.id)"
-                        >
-                          Enroll
-                        </button>
+    v-if="!isStudentEnrolledInProject(project.id)"
+    @click="openEnrollmentModal(project)" 
+    class="btn btn-primary mb-2"
+  >
+    Enroll
+  </button>
+
+  <span v-else class="btn btn-success mb-2" style="cursor: default;">Enrolled</span>
                       </div>
                     </div>
                   </div>
@@ -125,6 +154,26 @@ export default {
           </div>
         </div>
       </div>
+
+      <!-- Project Details Modal -->
+      <div class="modal fade show" v-if="showProjectDetailsModal" tabindex="-1" role="dialog" aria-labelledby="projectDetailsModalLabel" aria-hidden="true" style="display: block;">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="projectDetailsModalLabel">{{ selectedProject.name }}</h5>
+              <button type="button" class="btn-close" @click="closeProjectDetailsModal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <p><strong>Description:</strong> {{ selectedProject.description }}</p>
+              <p><strong>Min Team Size:</strong> {{ selectedProject.min_teammates }}</p>
+              <p><strong>Max Team Size:</strong> {{ selectedProject.max_teammates }}</p>
+              <p><strong>Deadline:</strong> {{ selectedProject.deadline }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
     </div>
   `,
   // Component data, created lifecycle hook, and methods as in your original code
@@ -138,13 +187,25 @@ export default {
       selectedTeam: '',
       teams: [],
       newTeamName: '',
-      selectedProject: null
+      selectedProject: null,
+      showProjectDetailsModal: false,
+      showUpdateModal: false,
+      newName: '',
+      newGitHubId: '',
     };
   },
+
+  computed: {
+    avatarUrl() {
+      return this.student.avatar_url || `https://api.dicebear.com/9.x/pixel-art/svg?seed=${encodeURIComponent(this.student.name)}`;
+    }
+  },
+  
   created() {
     this.fetchStudentInfo();
     this.fetchProjects();
   },
+  
   methods: {
     viewTeam(teamId) {
       this.$router.push({ name: 'project_team_std', params: { teamId } });
@@ -221,6 +282,18 @@ export default {
       this.newTeamName = '';
       this.selectedProject = null;
     },
+
+    openUpdateModal() {
+      this.newName = this.student.name; // Set the current name as the default
+      this.newGitHubId = this.student.github_id; // Set the current GitHub ID as the default
+      this.showUpdateModal = true;
+    },
+    closeUpdateModal() {
+      this.showUpdateModal = false;
+      this.newName = '';
+      this.newGitHubId = '';
+    },
+
     async fetchTeams(projectId) {
       try {
         const response = await fetch(`/api/projects/${projectId}/teams`);
@@ -285,6 +358,42 @@ export default {
       } catch (error) {
         console.error("Error enrolling:", error);
       }
+    },
+
+    async submitUpdate() {
+      try {
+        const userId = localStorage.getItem("user_id");
+        const response = await fetch(`/api/users/${userId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            name: this.newName,
+            github_id: this.newGitHubId,
+          }),
+        });
+
+        if (response.ok) {
+          alert('Name and GitHub ID updated successfully!');
+          this.student.name = this.newName; // Update local student data
+          this.student.github_id = this.newGitHubId; // Update local student data
+          this.closeUpdateModal();
+        } else {
+          alert('Error updating name and GitHub ID');
+        }
+      } catch (error) {
+        console.error("Error updating name and GitHub ID:", error);
+      }
+    },
+
+    viewProjectDetails(project) {
+      this.selectedProject = project;
+      this.showProjectDetailsModal = true;
+    },
+    closeProjectDetailsModal() {
+      this.showProjectDetailsModal = false;
+      this.selectedProject = null;
     },
   }
 };
