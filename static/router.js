@@ -10,6 +10,7 @@ import instructor_dashboard from './components/instructor_dashboard.js'
 import student_dashboard from './components/student_dashboard.js'
 import ta_dashboard from './components/ta_dashboard.js';
 import notifications from './components/notifications.js';
+import ta_home from './components/ta_home.js';
 
 
 
@@ -24,6 +25,7 @@ const routes = [
     { path: '/project_team_std/:teamId', component: project_team_std, name: 'project_team_std' },
     { path: '/instructor_dashboard', component: instructor_dashboard},
     { path: '/student_dashboard', component: student_dashboard},
+    { path: '/ta_home', component: ta_home, name:'ta_home'},
     { path: '/ta_dashboard', component: ta_dashboard, name:'ta_dashboard'},
     { path: '/notifications', name: 'notifications',component: notifications},    
 ]

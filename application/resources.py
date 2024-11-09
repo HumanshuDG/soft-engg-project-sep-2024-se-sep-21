@@ -438,6 +438,56 @@ class EnrollmentCheckResource(Resource):
         else:
             return {'message': 'Student is not enrolled in this project.'}, 404
 
+class TAHomepageResource(Resource):
+    def get(self, ta_id):
+        # Fetch teams where the given TA is assigned
+        teams = Team.query.join(TAAllocation).filter(TAAllocation.ta_id == ta_id).all()
+
+        # Get project IDs for teams assigned to the TA
+        project_ids = {team.project_id for team in teams}
+
+        # Fetch projects associated with those IDs
+        projects = Project.query.filter(Project.id.in_(project_ids)).all()
+
+        # Build response data
+        data = []
+        for project in projects:
+            project_data = {
+                'id': project.id,
+                'name': project.name,
+                'description': project.description,
+                'deadline': project.deadline.strftime('%Y-%m-%d'),
+                'teams': []
+            }
+            
+            # Get teams for the current project assigned to this TA
+            project_teams = [team for team in teams if team.project_id == project.id]
+            
+            for team in project_teams:
+                team_data = {
+                    'id': team.id,
+                    'team_name': team.team_name,
+                    'repo': team.repo,
+                    'members': [{'id': member.id, 'name': member.user.name} for member in team.members],
+                    'milestones': [],
+                    'submissions': []
+                }
+                
+                # Fetch milestones for this project
+                milestones = Milestone.query.filter_by(project_id=project.id).all()
+                team_data['milestones'] = [{'id': milestone.id, 'milestone_number': milestone.milestone_number, 'deadline': milestone.deadline.strftime('%Y-%m-%d')} for milestone in milestones]
+
+                # Fetch submissions for this team
+                submissions = MilestoneSubmit.query.filter_by(team_id=team.id).all()
+                team_data['submissions'] = [{'id': submission.id, 'milestone_id': submission.milestone_id, 'submission_date': submission.submission_date.strftime('%Y-%m-%d')} for submission in submissions]
+                
+                project_data['teams'].append(team_data)
+                
+            data.append(project_data)
+
+        return {'projects': data}, 200
+
+
 
 # Register resources with the API
 api.add_resource(UserResource, '/users', '/users/<int:user_id>')
@@ -452,3 +502,4 @@ api.add_resource(MilestoneSubmitResource, '/milestone_submits', '/milestone_subm
 api.add_resource(ProjectTeamResource, '/projects/<int:project_id>/teams')
 api.add_resource(EnrollmentCheckResource, '/projects/<int:project_id>/enrollments/<int:student_id>')
 api.add_resource(TAListResource, '/tas')
+api.add_resource(TAHomepageResource, '/ta_homepage/<int:ta_id>')
