@@ -9,6 +9,7 @@ import project_team_std from './components/project_team_std.js'; // Import the n
 import instructor_dashboard from './components/instructor_dashboard.js'
 import student_dashboard from './components/student_dashboard.js'
 import ta_dashboard from './components/ta_dashboard.js';
+import notifications from './components/notifications.js';
 
 
 
@@ -24,7 +25,7 @@ const routes = [
     { path: '/instructor_dashboard', component: instructor_dashboard},
     { path: '/student_dashboard', component: student_dashboard},
     { path: '/ta_dashboard', component: ta_dashboard, name:'ta_dashboard'},
-  
+    { path: '/notifications', name: 'notifications',component: notifications},    
 ]
 
 

@@ -32,9 +32,12 @@ export default {
                       <!-- Team Cards -->
                       <div class="mt-4">
                         <h5>Team Details</h5>
-                        <div class="row">
-                          <div class="team-card card mb-3 p-3 col-12 col-md-6" 
-                               v-for="team in project.teams" :key="team.id" style="max-width: 100%;">
+                        <div>
+                          <div 
+                            class="team-card card mb-3 p-3 w-100" 
+                            v-for="team in project.teams" 
+                            :key="team.id"
+                          >
                             <h6>Team Name: {{ team.team_name }}</h6>
                             <h6>Members:</h6>
                             <ul>
@@ -63,6 +66,7 @@ export default {
                           </div>
                         </div>
                       </div>
+
 
                       <!-- Button Group with Flex Wrap -->
                       <div class="d-flex flex-wrap mt-3">
