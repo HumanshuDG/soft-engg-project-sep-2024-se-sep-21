@@ -6,7 +6,7 @@ export default {
           <div class="col-12 col-md-4">
             <div class="card mb-4">
               <div class="card-body text-center">
-                <img :src="student.avatar_url || 'https://via.placeholder.com/100'" 
+                <img :src="avatarUrl"
                      alt="GitHub Profile Photo" 
                      class="profile-photo rounded-circle mb-3" 
                      style="width: 100px; height: 100px;" />
@@ -194,10 +194,18 @@ export default {
       newGitHubId: '',
     };
   },
+
+  computed: {
+    avatarUrl() {
+      return this.student.avatar_url || `https://api.dicebear.com/9.x/pixel-art/svg?seed=${encodeURIComponent(this.student.name)}`;
+    }
+  },
+  
   created() {
     this.fetchStudentInfo();
     this.fetchProjects();
   },
+  
   methods: {
     viewTeam(teamId) {
       this.$router.push({ name: 'project_team_std', params: { teamId } });
