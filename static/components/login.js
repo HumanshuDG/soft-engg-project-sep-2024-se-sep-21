@@ -55,10 +55,34 @@ export default {
     },
     goToRegister() {
       this.$router.push('/register');
-    }
+    },
+    goToHome() {
+      this.$router.push('/');
+    },
   },
   template: `
     <div>
+      <!-- Navbar -->
+      <nav navbar navbar-expand-lg navbar-light bg-light style="
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 1000; 
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 20px;
+        background-color: #F0E6F6;
+        ">
+        <div class="navbar-brand">
+          <img src="static/images/logo.png" alt="Logo" style="height: 30px; width: auto;" />
+        </div>
+        <div class="ml-auto">
+          <button class="btn btn-primary mt-2" @click="goToHome">Home</button>
+          <button class="btn btn-secondary mt-2" @click="goToRegister">Register</button>
+        </div>
+      </nav>
       <!-- Login Form -->
       <section class="vh-100 d-flex align-items-center" style="background-color: #f5f5f5;">
         <div class="container h-100">

@@ -1,5 +1,6 @@
 import router from './router.js';
 import Navbar from './components/navbar.js';
+import Footer from './components/footer.js';
 
 // Route Guard
 
@@ -24,7 +25,7 @@ router.beforeEach((to, from, next) => {
 new Vue({
   el: '#app',
   components: {
-    Navbar,
+    Navbar,Footer
   },
 
   template: `
@@ -32,6 +33,7 @@ new Vue({
       <!-- Conditionally render Navbar -->
       <Navbar v-if="!isAuthPage" :key='has_changed' />
       <router-view />
+      <Footer />
     </div>
   `,
   router,

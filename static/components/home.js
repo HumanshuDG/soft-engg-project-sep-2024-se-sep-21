@@ -5,8 +5,8 @@ export default {
       template: `
         <div>
           <footer style="
-            background-color: #007BFF; 
-            color: white; 
+            background-color: #F0E6F6; /* Very light purple color */
+            color: black; 
             text-align: center; 
             padding: 10px 0; 
             position: fixed; 
@@ -24,15 +24,16 @@ export default {
   template: `
     <div>
       <!-- Navbar -->
-      <nav style="
+      <nav  navbar navbar-expand-lg navbar-light bg-light style="
         display: flex; 
         justify-content: space-between; 
         align-items: center; 
-        padding: 10px 20px; 
-        background-color: #007BFF;
-        color: white;
+        padding: 10px 20px;
+        background-color: #F0E6F6; /* Very light blue color */
       ">
-        <h2 style="margin: 0; color: white;">Project Management App</h2>
+        <div class="navbar-brand">
+          <img src="static/images/logo.png" alt="Logo" style="height: 30px; width: auto;" />
+        </div>
         <div>
           <button class="btn btn-primary mt-2" @click="goToLogin">Login</button>
           <button class="btn btn-secondary mt-2" @click="goToRegister">Register</button>
@@ -90,5 +91,4 @@ export default {
       this.$router.push({ name: 'signup' });
     }
   }
-  
 };
