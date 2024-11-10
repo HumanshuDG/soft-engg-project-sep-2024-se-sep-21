@@ -3,8 +3,11 @@ export default {
     <div id="team-details" class="container mt-4">      
       <div class="d-flex justify-content-between align-items-center mb-4">
         <h2 class="text-center">Team Details</h2>
-        <!-- New GenAI Button -->
-        <button class="btn btn-secondary" @click="goToGenAI(team.id)">GenAI</button>
+        <!-- GenAI and Submit Feedback Buttons -->
+        <div>
+          <button class="btn btn-secondary me-2" @click="goToGenAI(team.id)">GenAI</button>
+          <button class="btn btn-primary" @click="submitFeedback(team.id)">Submit Feedback</button>
+        </div>
       </div>
 
       <div v-if="team">

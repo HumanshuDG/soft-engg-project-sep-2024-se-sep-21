@@ -424,7 +424,7 @@ export default {
     openEditMilestoneModal(milestone) {
       this.milestoneName = milestone.name;
       this.milestoneDescription = milestone.description;
-      this.milestoneDueDate = milestone.due_date;
+      this.milestoneDueDate = milestone.deadline;
       this.currentMilestoneId = milestone.id;
       this.milestoneModalVisible = true;
     },
