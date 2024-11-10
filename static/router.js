@@ -11,7 +11,7 @@ import student_dashboard from './components/student_dashboard.js'
 import ta_dashboard from './components/ta_dashboard.js';
 import notifications from './components/notifications.js';
 import ta_home from './components/ta_home.js';
-
+import admin_home from './components/admin_home.js';
 
 
 const routes = [
@@ -28,6 +28,7 @@ const routes = [
     { path: '/ta_home', component: ta_home, name:'ta_home'},
     { path: '/ta_dashboard', component: ta_dashboard, name:'ta_dashboard'},
     { path: '/notifications', name: 'notifications',component: notifications},    
+    { path: '/admin_home', component: admin_home},
 ]
 
 
