@@ -131,6 +131,36 @@ milestone_submit_fields = {
     'submission_date': fields.DateTime,
 }
 
+#For Admin Page
+# marshaling project details
+project_details_fields = {
+    'id': fields.Integer,
+    'name': fields.String,
+    'startTime': fields.String,
+    'deadline': fields.String,
+    'milestones': fields.List(fields.Integer),
+    'instructor': fields.String,
+    'TAs': fields.List(fields.String),
+    'teams': fields.Integer
+}
+
+# marshaling TA details
+ta_fields = {
+    'id': fields.Integer,
+    'name': fields.String
+}
+
+# marshaling the AdminHomeResource response
+admin_home_fields = {
+    'totalProjects': fields.Integer,
+    'totalTAs': fields.Integer,
+    'totalInstructors': fields.Integer,
+    'totalStudents': fields.Integer,
+    'projects': fields.List(fields.Nested(project_details_fields)),
+    'availableTAs': fields.List(fields.Nested(ta_fields))
+}
+
+
 
 # User Resource
 class UserResource(Resource):
@@ -501,6 +531,51 @@ class TAHomepageResource(Resource):
 
         return {'projects': data}, 200
 
+class AdminHomeResource(Resource):
+    @marshal_with(admin_home_fields)
+    def get(self):
+        # Fetch total number of projects
+        total_projects = Project.query.count()
+       
+        # Fetch total number of TAs
+        total_tas = User.query.join(Role, User.roles).filter(Role.id == 3).count()
+        
+        # Fetch total number of instructors by comparing role ID
+        total_instructors = User.query.join(Role, User.roles).filter(Role.id == 1).count()
+
+        # Fetch total number of students by comparing role ID
+        total_students = User.query.join(Role, User.roles).filter(Role.id == 2).count()
+       
+        # Fetch project details
+        projects = Project.query.all()
+        project_details = []
+        for project in projects:
+            project_details.append({
+                'id': project.id,
+                'name': project.name,
+                'startTime': project.created_on.strftime('%Y-%m-%d'),
+                'deadline': project.deadline.strftime('%Y-%m-%d') if project.deadline else 'N/A',
+                'milestones': [milestone.milestone_number for milestone in project.milestones],
+                'instructor': project.creator.name,
+                'TAs': [ta.name for ta in project.creator.ta_allocations],
+                'teams': len(project.teams)
+            })
+
+        # Fetch available TAs
+        available_tas = User.query.join(Role, User.roles).filter(Role.name == 'TA').all()
+        available_tas_list = [{'id': ta.id, 'name': ta.name} for ta in available_tas]
+
+        return {
+            'totalProjects': total_projects,
+            'totalTAs': total_tas,
+            'totalInstructors': total_instructors,
+            'totalStudents': total_students,
+            'projects': project_details,
+            'availableTAs': available_tas_list
+        }
+
+
+
 
 
 # Register resources with the API
@@ -517,3 +592,4 @@ api.add_resource(ProjectTeamResource, '/projects/<int:project_id>/teams')
 api.add_resource(EnrollmentCheckResource, '/projects/<int:project_id>/enrollments/<int:student_id>')
 api.add_resource(TAListResource, '/tas')
 api.add_resource(TAHomepageResource, '/ta_homepage/<int:ta_id>')
+api.add_resource(AdminHomeResource, '/admin_home')
