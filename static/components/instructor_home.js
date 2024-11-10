@@ -580,8 +580,7 @@ export default {
         id: null,
         name: '',
         description: '',
-        start_date: '',
-        end_date: '',
+        deadline: '',
         min_teammates: 1,
         max_teammates: 1,
       };
@@ -591,8 +590,8 @@ export default {
       this.newProject = {
         name: '',
         description: '',
-        start_date: '',
-        end_date: '',
+        creator_id : localStorage.getItem('user_id'),
+        deadline: '',
         min_teammates: 1,
         max_teammates: 1,
       };
