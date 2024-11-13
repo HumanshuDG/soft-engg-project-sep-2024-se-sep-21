@@ -5,15 +5,13 @@ from application.secondry import datastore
 from flask_security import Security
 from application.resources import api
 import requests
+from groq import Groq  # Import Groq for integrating the Groq API
 
-# Hugging Face API details
-HF_MODEL_URL = "https://api-inference.huggingface.co/models/facebook/bart-large-cnn"
-HF_API_KEY = ""  # Replace with your Hugging Face API token
+# Groq API details
+GROQ_API_KEY = "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"  # Replace with your Groq API token
 
-headers = {
-    "Authorization": f"Bearer {HF_API_KEY}",
-    "Content-Type": "application/json"
-}
+# Initialize the Groq client
+client = Groq(api_key=GROQ_API_KEY)
 
 # Create the Flask app
 def create_app():
@@ -36,7 +34,7 @@ def create_app():
 
 app = create_app()
 
-# Add the Hugging Face analysis route
+# Add the Groq analysis route (replacing Hugging Face)
 @app.route('/api/genai', methods=['POST'])
 def genai_analysis():
     data = request.get_json()
@@ -46,28 +44,33 @@ def genai_analysis():
     if not file_content:
         return jsonify({"error": "No file content provided"}), 400
 
-    # Combine user prompt and file content for the model
+    # Combine user prompt and file content for Groq model input
     inputs = f"{user_prompt}\n\n{file_content}"
 
     try:
-        print(f"Sending request to Hugging Face with inputs: {inputs}")
+        print(f"Sending request to Groq with inputs: {inputs}")
 
-        response = requests.post(
-            HF_MODEL_URL,
-            headers=headers,
-            json={"inputs": inputs}
+        # Send the request to Groq API to get feedback on the code
+        completion = client.chat.completions.create(
+            model="llama3-8b-8192",  # You can replace this with your desired model
+            messages=[
+                {"role": "system", "content": "You are a system which gives suggestions on how to improve the code based on the input code"},
+                {"role": "user", "content": inputs}
+            ],
+            temperature=1,
+            max_tokens=1024,
+            top_p=1,
+            stream=False,
+            stop=None,
         )
 
-        print(f"Received response: {response.status_code} - {response.text}")
+        # Extract the feedback from the Groq API response
+        feedback = completion.choices[0].message.content  # Access feedback content
 
+        print(f"Received feedback: {feedback}")
 
-        if response.status_code == 200:
-            # Extract result from response
-            result = response.json()[0].get("summary_text", "No result generated.")
-            return jsonify({"result": result})
-
-        else:
-            return jsonify({"error": "Error with Hugging Face API"}), 500
+        # Return the feedback as a JSON response
+        return jsonify({"result": feedback})
 
     except Exception as e:
         print(f"Error during analysis: {e}")

@@ -12,4 +12,4 @@ class DevelopmentConfig(Config):
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     WTF_CSRF_ENABLED = False
     SECURITY_TOKEN_AUTHENTICATION_HEADER = 'Authentication-Token'
-    HF_API_KEY = ""  # Store your Hugging Face API key here securely
+
