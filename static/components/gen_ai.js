@@ -1,185 +1,183 @@
 export default {
-    template: `
-      <div class="container-fluid">
-        <h2>GenAI Pages</h2>
-        <p>Team ID: {{ teamId }}</p>  
-        <!-- Repository Structure and File Content Row -->
-        <div class="row mt-4">
-          
-          <!-- Repository Structure Column -->
-          <div class="col-md-4">
-            <div class="card">
-              <div class="card-body">
-                <h3>Repository Structure</h3>
-                
-                <button v-if="currentPath" class="btn btn-secondary mb-2" @click="goBack">Back</button>
-                
-                <ul class="tree">
-                  <tree-item
-                    v-for="item in repoStructure"
-                    :key="item.path"
-                    :item="item"
-                    @fetch-child-items="fetchChildItems"
-                    @file-clicked="fetchFileContent"
-                  ></tree-item>
-                </ul>
-              </div>
+  template: `
+    <div class="container-fluid">
+      <h2>GenAI Pages</h2>
+      <p>Team ID: {{ teamId }}</p>  
+      <!-- Repository Structure and File Content Row -->
+      <div class="row mt-4">
+        
+        <!-- Repository Structure Column -->
+        <div class="col-md-4">
+          <div class="card">
+            <div class="card-body">
+              <h3>Repository Structure</h3>
+              
+              <button v-if="currentPath" class="btn btn-secondary mb-2" @click="goBack">Back</button>
+              
+              <ul class="tree">
+                <tree-item
+                  v-for="item in repoStructure"
+                  :key="item.path"
+                  :item="item"
+                  @fetch-child-items="fetchChildItems"
+                  @file-clicked="fetchFileContent"
+                ></tree-item>
+              </ul>
             </div>
           </div>
-  
-          <!-- File Content Column -->
-          <div class="col-md-8">
-            <div class="card">
-              <div class="card-body">
-                <h3>File Content</h3>
-                <textarea class="form-control" v-if="fileContent" rows="20" readonly>{{ fileContent }}</textarea>
-                <p v-else class="text-muted">Select a file to view its content.</p>
-               
-               
-                <!-- GenAI Tool Input Form at the Bottom -->
-                <div class="form-group mt-4">
-                  <label for="prompt">Enter your query:</label>
-                  <textarea id="prompt" class="form-control" v-model="userPrompt" rows="3" placeholder="Ask something about the file content..."></textarea>
-                </div>
-                
-                <button class="btn btn-primary mt-2" @click="submitAnalysis">Submit</button>
-                
-                <div v-if="loading" class="mt-3 text-primary">Loading...</div>
-                
-                <div v-if="result" class="mt-3">
+        </div>
+
+        <!-- File Content Column -->
+        <div class="col-md-8">
+          <div class="card">
+            <div class="card-body">
+              <h3>File Content</h3>
+              <textarea class="form-control" v-if="fileContent" rows="20" readonly>{{ fileContent }}</textarea>
+              <p v-else class="text-muted">Select a file to view its content.</p>
+             
+              <!-- GenAI Tool Buttons for Analysis -->
+              <div class="button-group mt-2">
+                  <button class="btn btn-primary mt-2" @click="submitAnalysis('summarize')">Summarize</button>
+                  <button class="btn btn-primary mt-2" @click="submitAnalysis('analyze')">Analyze</button>
+                  <button class="btn btn-primary mt-2" @click="submitAnalysis('rate')">Rate</button>
+                  <button class="btn btn-primary mt-2" @click="submitAnalysis('feedback')">Feedback</button>
+              </div>
+              
+              <div v-if="loading" class="mt-3 text-primary">Loading...</div>
+              
+              <div v-if="result" class="mt-3">
                 <h4>Result:</h4>
-                <!-- Wrap the result text in a div with appropriate classes for wrapping -->
                 <div class="text-wrap overflow-auto" style="white-space: pre-wrap; word-wrap: break-word; max-height: 300px;">
                   {{ result }}
                 </div>
               </div>
               
-          
-              
-                </div>
             </div>
           </div>
-          
         </div>
+        
       </div>
-    `,
+    </div>
+  `,
 
-    data() {
-      return {
-        teamId: null,
-        userPrompt: '',
-        result: null,
-        loading: false,
-        repoStructure: [],
-        repoName: '',
-        currentPath: '',
-        fileContent: null // To store the content of the clicked file
-      };
+  data() {
+    return {
+      teamId: null,
+      result: null,
+      loading: false,
+      repoStructure: [],
+      repoName: '',
+      currentPath: '',
+      fileContent: null // To store the content of the clicked file
+    };
+  },
+  created() {
+    this.teamId = this.$route.params.teamId;
+    this.fetchTeamDetails(this.teamId);
+  },
+  methods: {
+
+    async submitAnalysis(task) {
+      this.loading = true;
+      this.result = null;
+  
+      // Extract the file name from the currentPath
+      const fileName = this.currentPath ? this.currentPath.split('/').pop() : '';
+  
+      // Validate that fileName, fileContent, and task are not empty
+      if (!fileName || !this.fileContent || !task) {
+        this.result = "Please select a file and try again.";
+        console.error("Missing file name, file content, or task.");
+        this.loading = false;
+        return;
+      }
+  
+      try {
+        const response = await fetch("/api/genai", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            file_name: fileName,
+            file_content: this.fileContent,
+            task: task  // Send the task to specify the action on backend
+          })
+        });
+  
+        if (response.ok) {
+          const data = await response.json();
+          this.result = data.result;
+        } else {
+          const errorData = await response.json();
+          this.result = errorData.error || "Failed to get AI analysis.";
+          console.error("AI analysis error:", errorData);
+        }
+      } catch (error) {
+        console.error("Error during AI analysis:", error);
+        this.result = "An unexpected error occurred. Please try again.";
+      } finally {
+        this.loading = false;
+      }
     },
-    created() {
-      this.teamId = this.$route.params.teamId;
-      this.fetchTeamDetails(this.teamId);
+
+    async fetchTeamDetails(teamId) {
+      try {
+        const response = await fetch(`/api/teams/${teamId}`);
+        if (response.ok) {
+          const data = await response.json();
+          this.repoName = data.repo.split("github.com/")[1]; 
+          this.fetchRepoContents(); 
+        } else {
+          console.error("Failed to fetch team details.");
+        }
+      } catch (error) {
+        console.error("Error fetching team details:", error);
+      }
     },
-    methods: {
-
-        async submitAnalysis() {
-            this.loading = true;
-            this.result = null;
-
-            // Extract the file name from the currentPath
-            const fileName = this.currentPath ? this.currentPath.split('/').pop() : '';
-            console.log("File Name:", fileName); // Debugging log
-
-            // Validate that fileName and fileContent are not empty
-            if (!fileName || !this.fileContent) {
-              console.error("Missing file name or file content.");
-              this.loading = false;
-              return;
-            }
-
-            try {
-              const response = await fetch("/api/genai", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  file_name: fileName,  // Send file_name along with content and user prompt
-                  file_content: this.fileContent,
-                  user_prompt: this.userPrompt
-                })
-              });
-
-              if (response.ok) {
-                const data = await response.json();
-                this.result = data.result;
-              } else {
-                console.error("Failed to get AI analysis.");
-              }
-            } catch (error) {
-              console.error("Error during AI analysis:", error);
-            } finally {
-              this.loading = false;
-            }
-          },
-
-
-      async fetchTeamDetails(teamId) {
-        try {
-          const response = await fetch(`/api/teams/${teamId}`);
-          if (response.ok) {
-            const data = await response.json();
-            this.repoName = data.repo.split("github.com/")[1]; 
-            this.fetchRepoContents(); 
-          } else {
-            console.error("Failed to fetch team details.");
-          }
-        } catch (error) {
-          console.error("Error fetching team details:", error);
+    async fetchRepoContents(path = '') {
+      this.currentPath = path; // Update current path
+      const url = `https://api.github.com/repos/${this.repoName}/contents/${path}`;
+      try {
+        const response = await fetch(url);
+        if (response.ok) {
+          const data = await response.json();
+          this.repoStructure = data; // Store the fetched structure
+        } else {
+          console.error("Failed to fetch repository contents.");
         }
-      },
-      async fetchRepoContents(path = '') {
-        this.currentPath = path; // Update current path
-        const url = `https://api.github.com/repos/${this.repoName}/contents/${path}`;
-        try {
-          const response = await fetch(url);
-          if (response.ok) {
-            const data = await response.json();
-            this.repoStructure = data; // Store the fetched structure
-          } else {
-            console.error("Failed to fetch repository contents.");
-          }
-        } catch (error) {
-          console.error("Error fetching repository contents:", error);
-        }
-      },
-      async fetchChildItems(item) {
-        if (item.type === 'dir') {
-          await this.fetchRepoContents(item.path);
-        }
-      },
-      async goBack() {
-        const parentPath = this.currentPath.split('/').slice(0, -1).join('/');
-        this.fetchRepoContents(parentPath); // Fetch contents of the parent directory
-      },
-      async fetchFileContent(filePath) {
-        const url = `https://api.github.com/repos/${this.repoName}/contents/${filePath}`;
-        try {
-          const response = await fetch(url);
-          if (response.ok) {
-            const data = await response.json();
-            if (data.content) {
-              this.fileContent = atob(data.content); // Assuming the file is text
-              this.currentPath = filePath;  // Set the current path when a file is clicked
-              console.log("Current Path:", this.currentPath); // Debugging log
-
-            }
-          } else {
-            console.error("Failed to fetch file content.");
-          }
-        } catch (error) {
-          console.error("Error fetching file content:", error);
-        }
-      },
+      } catch (error) {
+        console.error("Error fetching repository contents:", error);
+      }
     },
+    async fetchChildItems(item) {
+      if (item.type === 'dir') {
+        await this.fetchRepoContents(item.path);
+      }
+    },
+    async goBack() {
+      const parentPath = this.currentPath.split('/').slice(0, -1).join('/');
+      this.fetchRepoContents(parentPath); // Fetch contents of the parent directory
+    },
+    async fetchFileContent(filePath) {
+      const url = `https://api.github.com/repos/${this.repoName}/contents/${filePath}`;
+      try {
+        const response = await fetch(url);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.content) {
+            this.fileContent = atob(data.content); // Assuming the file is text
+            this.currentPath = filePath;  // Set the current path when a file is clicked
+            console.log("Current Path:", this.currentPath); // Debugging log
+
+          }
+        } else {
+          console.error("Failed to fetch file content.");
+        }
+      } catch (error) {
+        console.error("Error fetching file content:", error);
+      }
+    },
+  },
+
     components: {
       TreeItem: {
         props: ['item'],

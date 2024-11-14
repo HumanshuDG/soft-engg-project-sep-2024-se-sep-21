@@ -40,21 +40,34 @@ def genai_analysis():
     data = request.get_json()
     file_content = data.get('file_content')
     user_prompt = data.get('user_prompt')
+    task = data.get('task')  # New task parameter
 
     if not file_content:
         return jsonify({"error": "No file content provided"}), 400
 
-    # Combine user prompt and file content for Groq model input
+    # Set up task-specific instructions
+    if task == "summarize":
+        system_prompt = "Summarize the code and provide a brief overview of what it does."
+    elif task == "analyze":
+        system_prompt = "Analyze the code for errors and suggest improvements."
+    elif task == "rate":
+        system_prompt = "Rate the code from 0-10 considering code cleanliness, readability, and adherence to coding standards."
+    elif task == "feedback":
+        system_prompt = "Provide a brief feedback on the code, focusing on strengths and areas for improvement."
+    else:
+        return jsonify({"error": "Invalid task specified"}), 400
+
+    # Combine user prompt and file content
     inputs = f"{user_prompt}\n\n{file_content}"
 
     try:
-        print(f"Sending request to Groq with inputs: {inputs}")
+        print(f"Sending request to Groq with task '{task}' and inputs: {inputs}")
 
-        # Send the request to Groq API to get feedback on the code
+        # Send request to Groq API with the task-specific prompt
         completion = client.chat.completions.create(
-            model="llama3-8b-8192",  # You can replace this with your desired model
+            model="llama3-8b-8192",  # Replace with the specific model as needed
             messages=[
-                {"role": "system", "content": "You are a system which gives suggestions on how to improve the codebased on the input code"},
+                {"role": "system", "content": system_prompt},
                 {"role": "user", "content": inputs}
             ],
             temperature=1,
@@ -64,10 +77,9 @@ def genai_analysis():
             stop=None,
         )
 
-        # Extract the feedback from the Groq API response
         feedback = completion.choices[0].message.content  # Access feedback content
 
-        print(f"Received feedback: {feedback}")
+        print(f"Received response: {feedback}")
 
         # Return the feedback as a JSON response
         return jsonify({"result": feedback})
