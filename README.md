@@ -15,8 +15,4 @@ then run "python main.py" to run the app.
 
 admin login : admin@email.com, Password : admin
 
-Create a Access token for HuggingFace:
-Create an account for HuggingFace
-Go to settings and generate a Access token to access the API
-Paste the access token key inside main.py
-Paste the access token in config.py
+
