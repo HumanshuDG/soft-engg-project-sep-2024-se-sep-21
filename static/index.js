@@ -28,15 +28,16 @@ new Vue({
   components: {
     Navbar,Footer
   },
-
   template: `
-    <div>
-      <!-- Conditionally render Navbar -->
-      <Navbar v-if="!isAuthPage" :key='has_changed' />
+  <div id="app">
+    <Navbar v-if="!isAuthPage" :key='has_changed' />
+    <div style="padding-bottom: 60px;">
+      <!-- The padding here should be equal to or greater than the footer height -->
       <router-view />
-      <Footer />
     </div>
-  `,
+    <Footer />
+  </div>
+`,
   router,
 
   data: {
