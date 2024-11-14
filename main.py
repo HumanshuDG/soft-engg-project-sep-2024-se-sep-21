@@ -54,7 +54,7 @@ def genai_analysis():
         completion = client.chat.completions.create(
             model="llama3-8b-8192",  # You can replace this with your desired model
             messages=[
-                {"role": "system", "content": "You are a system which gives suggestions on how to improve the code based on the input code"},
+                {"role": "system", "content": "You are a system which gives suggestions on how to improve the codebased on the input code"},
                 {"role": "user", "content": inputs}
             ],
             temperature=1,

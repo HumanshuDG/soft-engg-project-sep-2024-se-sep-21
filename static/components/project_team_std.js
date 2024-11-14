@@ -1,119 +1,156 @@
 export default {
-    template: `
-      <div id="team-details" class="container mt-4">      
-        <div class="d-flex justify-content-between align-items-center mb-4">
-          <h2 class="text-center">Team Details</h2>
+  template: `
+<div id="team-details" class="container mt-4">
+  <!-- Header Section -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="text-center">Team Details</h2>
+    <h2 class="text-center">Team Statistics</h2>
+    <button class="btn btn-primary" @click="openFeedbackModal"><i class="fa-regular fa-comments"></i>Feedbacks</button>
+  </div>
+
+    <!-- Feedback Modal -->
+  <div class="modal fade" id="feedbackModal" tabindex="-1" aria-labelledby="feedbackModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="feedbackModalLabel">Team Feedback</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
-  
-        <div v-if="team">
-          <!-- Team Information Card -->
-          <div class="card mb-4">
-            <div class="card-header bg-primary text-white">
-              Team Information
-            </div>
-            <div class="card-body">
-              <h5 class="card-title">Team Name: {{ team.team_name }}</h5>
-              <p><strong>Project ID:</strong> {{ team.project_id }}</p>
-              <p>
-                <strong>GitHub Repo:</strong>
-                <a :href="team.repo" target="_blank" rel="noopener noreferrer">{{ team.repo }}</a>
-              </p>
-              <h6>Members:</h6>
-              <ul>
-                <li v-for="member in team.members" :key="member.id">{{ member.name }}</li>
-              </ul>
-            </div>
-          </div>
-          <h2 class="mb-4 text-center">GitHub Repo Details</h2>
-          <!-- Row for Commits, Pull Requests, and Issues with scrollable cards -->
-          <div class="row">
-            <div class="col-md-4 mb-4">
-              <div class="card h-100">
-                <div class="card-header bg-info text-white">
-                  Recent Commits
-                </div>
-                <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
-                  <table class="table table-striped mb-0">
-                    <thead class="thead-light">
-                      <tr>
-                        <th>Message</th>
-                        <th>Author</th>
-                        <th>Date</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr v-for="commit in commits" :key="commit.sha">
-                        <td>{{ commit.commit.message }}</td>
-                        <td>{{ commit.commit.author.name }}</td>
-                        <td>{{ new Date(commit.commit.author.date).toLocaleDateString() }}</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-    
-            <div class="col-md-4 mb-4">
-              <div class="card h-100">
-                <div class="card-header bg-success text-white">
-                  Open Pull Requests
-                </div>
-                <div class="list-group list-group-flush overflow-auto" style="max-height: 300px;">
-                  <a v-for="pr in pullRequests" :key="pr.id" :href="pr.html_url" target="_blank" class="list-group-item list-group-item-action">
-                    {{ pr.title }} by {{ pr.user.login }}
-                  </a>
-                </div>
-              </div>
-            </div>
-    
-            <div class="col-md-4 mb-4">
-              <div class="card h-100">
-                <div class="card-header bg-warning text-dark">
-                  Open Issues
-                </div>
-                <div class="list-group list-group-flush overflow-auto" style="max-height: 300px;">
-                  <a v-for="issue in issues" :key="issue.id" :href="issue.html_url" target="_blank" class="list-group-item list-group-item-action">
-                    {{ issue.title }} by {{ issue.user.login }}
-                  </a>
-                </div>
-              </div>
-            </div>
-          </div>
-  
-          <!-- Charts Section -->
-          <div class="row mt-4">
-          <h2 class="mb-4 text-center">Team Statistics</h2>
-            <div class="col-md-4">
-              <div class="card">
-                <div class="card-header bg-info text-white">Commits per Day</div>
-                <div class="card-body">
-                  <canvas id="commitsChart"></canvas>
-                </div>
-              </div>
-            </div>
-            <div class="col-md-4">
-              <div class="card">
-                <div class="card-header bg-success text-white">Pull Requests by User</div>
-                <div class="card-body">
-                  <canvas id="pullRequestsChart"></canvas>
-                </div>
-              </div>
-            </div>
-            <div class="col-md-4">
-              <div class="card">
-                <div class="card-header bg-warning text-dark">Issues by User</div>
-                <div class="card-body">
-                  <canvas id="issuesChart"></canvas>
-                </div>
-              </div>
-            </div>
-          </div>
+        <div class="modal-body">
+          <ul class="list-group">
+            <li v-for="feedback in feedbacks" :key="feedback.id" class="list-group-item">
+              <p><strong>{{ feedback.author }}:</strong> {{ feedback.comment }}</p>
+              <small class="text-muted">{{ new Date(feedback.date).toLocaleString() }}</small>
+            </li>
+          </ul>
         </div>
-        
-        <div v-else>
-          <p class="text-center">Loading team details...</p>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- Main Content Section -->
+  <div v-if="team" class="row">
+    <!-- Left Box: Team and Milestones -->
+    <div class="col-md-4">
+      <div class="card mb-4">
+        <div class="card-header bg-primary text-white">Team Information</div>
+        <div class="card-body">
+          <h5 class="card-title">Team Name: {{ team.team_name }}</h5>
+          <p><strong>Project ID:</strong> {{ team.project_id }}</p>
+          <p>
+            <strong>GitHub Repo:</strong>
+            <a :href="team.repo" target="_blank" rel="noopener noreferrer">{{ team.repo }}</a>
+          </p>
+          <h6>Members:</h6>
+          <ul>
+            <li v-for="member in team.members" :key="member.id">{{ member.name }}</li>
+          </ul>
+        </div>
+
+        <div class="card-header bg-info text-white">Project Milestones</div>
+        <div class="card-body">
+          <ul class="list-unstyled">
+            <li v-for="milestone in milestones" :key="milestone.id" class="mb-3">
+              <h5>Milestone #{{ milestone.milestone_number }}
+                <button v-if="!milestone.submitted" class="btn btn-link" @click="submitMilestone(milestone)"><i class="fa-solid fa-check-to-slot">Mark Submitted</i></button>
+                <span v-else class="badge bg-success">Submitted</span>
+              </h5>
+              <p><strong>Deadline:</strong> {{ formatDate(milestone.deadline) }}</p>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Box: Statistics and Charts -->
+    <div class="col-md-8">
+      <!-- Make this section scrollable -->
+      <div class="overflow-auto" style="max-height: 500px; padding-right: 10px;">
+        <!-- Commits per Day Chart -->
+        <div class="card mb-4">
+          <div class="card-header bg-info text-white">Commits per Day</div>
+          <div class="card-body">
+            <canvas id="commitsChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Pie Charts Row -->
+        <div class="row">
+          <div class="col-md-6">
+            <div class="card mb-4">
+              <div class="card-header bg-success text-white">Pull Requests by User</div>
+              <div class="card-body">
+                <canvas id="pullRequestsChart"></canvas>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="card mb-4">
+              <div class="card-header bg-warning text-dark">Issues by User</div>
+              <div class="card-body">
+                <canvas id="issuesChart"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- GitHub Data Section -->
+  <div class="row mt-4">
+    <!-- Left: Recent Commits -->
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-header bg-info text-white">Recent Commits</div>
+        <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
+          <table class="table table-striped mb-0">
+            <thead class="thead-light">
+              <tr>
+                <th>Message</th>
+                <th>Author</th>
+                <th>Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="commit in commits" :key="commit.sha">
+                <td>{{ commit.commit.message }}</td>
+                <td>{{ commit.commit.author.name }}</td>
+                <td>{{ new Date(commit.commit.author.date).toLocaleDateString() }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: Pull Requests and Issues -->
+    <div class="col-md-6">
+      <!-- Open Pull Requests -->
+      <div class="card mb-4">
+        <div class="card-header bg-success text-white">Open Pull Requests</div>
+        <div class="list-group list-group-flush overflow-auto" style="max-height: 300px;">
+          <a v-for="pr in pullRequests" :key="pr.id" :href="pr.html_url" target="_blank" class="list-group-item list-group-item-action">
+            {{ pr.title }} by {{ pr.user.login }}
+          </a>
+        </div>
+      </div>
+
+      <!-- Open Issues -->
+      <div class="card">
+        <div class="card-header bg-warning text-dark">Open Issues</div>
+        <div class="list-group list-group-flush overflow-auto" style="max-height: 300px;">
+          <a v-for="issue in issues" :key="issue.id" :href="issue.html_url" target="_blank" class="list-group-item list-group-item-action">
+            {{ issue.title }} by {{ issue.user.login }}
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
     `,
     data() {
       return {
@@ -121,6 +158,8 @@ export default {
         commits: [],
         pullRequests: [],
         issues: [],
+        milestones: [],
+        feedbacks: [],
       };
     },
     created() {
@@ -128,12 +167,27 @@ export default {
       this.fetchTeamDetails(teamId);
     },
     methods: {
+      openFeedbackModal() {
+        // Fetch feedbacks from API
+        fetch(`/api/teams/${this.team.id}/feedbacks`)
+          .then((response) => response.json())
+          .then((data) => {
+            this.feedbacks = data;
+            const feedbackModal = new bootstrap.Modal(document.getElementById('feedbackModal'));
+            feedbackModal.show();
+          })
+          .catch((error) => {
+            console.error("Error fetching feedbacks:", error);
+          });
+      },
+
       async fetchTeamDetails(teamId) {
         try {
           const response = await fetch(`/api/teams/${teamId}`);
           if (response.ok) {
             const data = await response.json();
             this.team = data;
+            this.fetchMilestones(data.project_id);
             this.fetchGitHubData(data.repo);
           } else {
             console.error("Failed to fetch team details.");
@@ -142,6 +196,25 @@ export default {
           console.error("Error fetching team details:", error);
         }
       },
+
+      async fetchMilestones(projectId) {
+        try {
+          const response = await fetch(`/api/milestones_list?project_id=${projectId}`);
+          if (response.ok) {
+            const data = await response.json();
+            this.milestones = data;
+          } else {
+            console.error("Failed to fetch milestones.");
+          }
+        } catch (error) {
+          console.error("Error fetching milestones:", error);
+        }
+      },
+      formatDate(date) {
+        const d = new Date(date);
+        return d.toLocaleDateString();
+      },
+
       async fetchGitHubData(repoUrl) {
         const repoName = repoUrl.split("github.com/")[1];
     
@@ -191,7 +264,7 @@ export default {
             labels: Object.keys(commitsPerDay),
             datasets: [{ label: "Commits", data: Object.values(commitsPerDay), backgroundColor: "rgba(0, 123, 255, 0.6)" }]
           },
-          options: { responsive: true, scales: { x: { beginAtZero: true } } }
+          options: {indexAxis: 'y', responsive: true, scales: { x: { beginAtZero: true } } }
         });
       },
       setupPullRequestsChart() {
