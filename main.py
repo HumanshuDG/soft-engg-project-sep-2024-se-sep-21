@@ -47,13 +47,33 @@ def genai_analysis():
 
     # Set up task-specific instructions
     if task == "summarize":
-        system_prompt = "Summarize the code and provide a brief overview of what it does."
+        system_prompt = (
+            "Summarize the code in no more than 100 words and provide a brief overview of what it does."
+        )
     elif task == "analyze":
-        system_prompt = "Analyze the code for errors and suggest improvements."
+        # New instructions for analysis to return a score first
+        system_prompt = (
+            "Analyze the code and provide a rating out of 10 considering the following factors: "
+            "1. Functionality (Are the features well-implemented?)\n"
+            "2. Errors (Are there any errors in the code?)\n"
+            "3. Improvements (Does the code need improvements or optimizations?)\n"
+            "Provide your score first, followed by a brief explanation of the rating. "
+            "Example: 'Your score: 8. The code has good functionality but can be optimized.'"
+        )
     elif task == "rate":
-        system_prompt = "Rate the code from 0-10 considering code cleanliness, readability, and adherence to coding standards."
+        # New instructions for rating to return a score first
+        system_prompt = (
+            "Rate the code from 0-10 considering code cleanliness, readability, and adherence to coding standards. "
+            "Provide your score first, followed by a brief explanation of the rating. "
+            "Example: 'Your score: 9. The code is clean and readable with good variable names and structure.'"
+        )
     elif task == "feedback":
-        system_prompt = "Provide a brief feedback on the code, focusing on strengths and areas for improvement."
+        # Provide feedback without unnecessary improvement suggestions if no improvements are needed
+        system_prompt = (
+            "Provide brief feedback on the code, focusing on strengths and areas for improvement. "
+            "The feedback should be no more than 50 words. If the code is well-written and doesn't require improvements, "
+            "omit any feedback related to improvements and focus on the strengths."
+        )
     else:
         return jsonify({"error": "Invalid task specified"}), 400
 

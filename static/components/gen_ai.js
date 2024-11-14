@@ -3,9 +3,10 @@ export default {
     <div class="container-fluid">
       <h2>GenAI Pages</h2>
       <p>Team ID: {{ teamId }}</p>  
+
       <!-- Repository Structure and File Content Row -->
       <div class="row mt-4">
-        
+
         <!-- Repository Structure Column -->
         <div class="col-md-4">
           <div class="card">
@@ -25,9 +26,50 @@ export default {
               </ul>
             </div>
           </div>
+          
+          <!-- Submit Report Card with Bootstrap styles for shadow and background -->
+          <div class="card mt-4 shadow-lg bg-light p-3 mb-4">
+            <div class="card-body">
+              <h3>Submit Report</h3>
+              <form @submit.prevent="submitReport">
+                <div class="mb-3">
+                  <label for="scoreAnalysis" class="form-label">Score from Analysis</label>
+                  <input
+                    v-model="reportData.scoreAnalysis"
+                    type="number"
+                    class="form-control"
+                    id="scoreAnalysis"
+                    placeholder="Enter score from analysis"
+                  />
+                </div>
+                <div class="mb-3">
+                  <label for="scoreRate" class="form-label">Score from Rate</label>
+                  <input
+                    v-model="reportData.scoreRate"
+                    type="number"
+                    class="form-control"
+                    id="scoreRate"
+                    placeholder="Enter score from rate"
+                  />
+                </div>
+                <div class="mb-3">
+                  <label for="feedback" class="form-label">Feedback</label>
+                  <textarea
+                    v-model="reportData.feedback"
+                    class="form-control"
+                    id="feedback"
+                    rows="4"
+                    placeholder="Feedback will appear here"
+                  ></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">Submit</button>
+              </form>
+            </div>
+          </div>
         </div>
 
-        <!-- File Content Column -->
+
+        <!-- File Content Column (Full Width) -->
         <div class="col-md-8">
           <div class="card">
             <div class="card-body">
@@ -37,10 +79,10 @@ export default {
              
               <!-- GenAI Tool Buttons for Analysis -->
               <div class="button-group mt-2">
-                  <button class="btn btn-primary mt-2" @click="submitAnalysis('summarize')">Summarize</button>
-                  <button class="btn btn-primary mt-2" @click="submitAnalysis('analyze')">Analyze</button>
-                  <button class="btn btn-primary mt-2" @click="submitAnalysis('rate')">Rate</button>
-                  <button class="btn btn-primary mt-2" @click="submitAnalysis('feedback')">Feedback</button>
+                <button class="btn btn-primary mt-2" @click="submitAnalysis('summarize')">Summarize</button>
+                <button class="btn btn-primary mt-2" @click="submitAnalysis('analyze')">Analyze</button>
+                <button class="btn btn-primary mt-2" @click="submitAnalysis('rate')">Rate</button>
+                <button class="btn btn-primary mt-2" @click="submitAnalysis('feedback')">Feedback</button>
               </div>
               
               <div v-if="loading" class="mt-3 text-primary">Loading...</div>
@@ -51,7 +93,6 @@ export default {
                   {{ result }}
                 </div>
               </div>
-              
             </div>
           </div>
         </div>
@@ -68,22 +109,39 @@ export default {
       repoStructure: [],
       repoName: '',
       currentPath: '',
-      fileContent: null // To store the content of the clicked file
+      fileContent: null, // To store the content of the clicked file
+      reportData: {
+        scoreAnalysis: null,
+        scoreRate: null,
+        feedback: ''
+      }, // To store data for the report form
     };
   },
   created() {
     this.teamId = this.$route.params.teamId;
     this.fetchTeamDetails(this.teamId);
+    // Load stored data from localStorage if available
+    const storedReport = JSON.parse(localStorage.getItem('reportData'));
+    if (storedReport) {
+      this.reportData = storedReport;
+    }
+  },
+  watch: {
+    reportData: {
+      deep: true,
+      handler(newReportData) {
+        localStorage.setItem('reportData', JSON.stringify(newReportData));
+      }
+    }
   },
   methods: {
-
     async submitAnalysis(task) {
       this.loading = true;
       this.result = null;
-  
+    
       // Extract the file name from the currentPath
       const fileName = this.currentPath ? this.currentPath.split('/').pop() : '';
-  
+    
       // Validate that fileName, fileContent, and task are not empty
       if (!fileName || !this.fileContent || !task) {
         this.result = "Please select a file and try again.";
@@ -91,7 +149,7 @@ export default {
         this.loading = false;
         return;
       }
-  
+    
       try {
         const response = await fetch("/api/genai", {
           method: "POST",
@@ -102,10 +160,25 @@ export default {
             task: task  // Send the task to specify the action on backend
           })
         });
-  
+    
         if (response.ok) {
           const data = await response.json();
           this.result = data.result;
+    
+          // Extract the score (assuming it starts with "Your score: ")
+          const scoreMatch = this.result.match(/Your score:\s*([\d\.]+)/);
+          if (scoreMatch) {
+            const score = parseFloat(scoreMatch[1]);
+            if (task === 'rate') {
+              this.reportData.scoreRate = score; // Store score in 'scoreRate'
+            } else if (task === 'analyze') {
+              this.reportData.scoreAnalysis = score; // Store score in 'scoreAnalysis'
+            }
+          }
+          if (task === 'feedback') {
+            this.reportData.feedback = this.result;
+          }
+    
         } else {
           const errorData = await response.json();
           this.result = errorData.error || "Failed to get AI analysis.";
@@ -167,7 +240,6 @@ export default {
             this.fileContent = atob(data.content); // Assuming the file is text
             this.currentPath = filePath;  // Set the current path when a file is clicked
             console.log("Current Path:", this.currentPath); // Debugging log
-
           }
         } else {
           console.error("Failed to fetch file content.");
@@ -176,7 +248,33 @@ export default {
         console.error("Error fetching file content:", error);
       }
     },
+    async submitReport() {
+      try {
+        const response = await fetch('/api/submit-report', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(this.reportData)
+        });
+
+        if (response.ok) {
+          alert('Report submitted successfully!');
+          localStorage.removeItem('reportData');
+          this.reportData = {
+            scoreAnalysis: null,
+            scoreRate: null,
+            feedback: ''
+          };
+        } else {
+          alert('Failed to submit report. Please try again.');
+        }
+      } catch (error) {
+        console.error('Error submitting report:', error);
+        alert('An error occurred. Please try again.');
+      }
+    },
+
   },
+
 
     components: {
       TreeItem: {
