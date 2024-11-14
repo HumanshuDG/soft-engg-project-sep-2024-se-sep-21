@@ -6,9 +6,46 @@ export default {
         <!-- GenAI and Submit Feedback Buttons -->
         <div>
           <button class="btn btn-secondary me-2" @click="goToGenAI(team.id)">GenAI</button>
-          <button class="btn btn-primary" @click="submitFeedback(team.id)">Submit Feedback</button>
+          <button class="btn btn-primary" @click="openFeedbackModal(team.id)">Submit Feedback</button>
         </div>
       </div>
+
+      <!-- Feedback Modal -->
+        <div class="modal fade" id="feedbackModal" tabindex="-1" aria-labelledby="feedbackModalLabel" aria-hidden="true">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title" id="feedbackModalLabel">Feedbacks</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <div class="modal-body">
+                <!-- Display existing feedbacks -->
+                <div v-if="existingFeedbacks.length">
+                  <div class="mb-3" v-for="feedback in existingFeedbacks" :key="feedback.id">
+                    <p><strong>Feedback:</strong> {{ feedback.feedback_text }}</p>
+                    <p><small>Submitted on: {{ new Date(feedback.created_on).toLocaleString() }}</small></p>
+                    <hr />
+                  </div>
+                </div>
+                <div v-else>
+                  <p>No feedbacks yet for this team.</p>
+                </div>
+
+                <!-- Add new feedback -->
+                <textarea
+                  class="form-control"
+                  v-model="feedbackText"
+                  placeholder="Enter your feedback"
+                  rows="3"
+                ></textarea>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" @click="submitFeedbackToAPI">Submit</button>
+              </div>
+            </div>
+          </div>
+        </div>
 
       <div v-if="team">
         <!-- Team Information Card -->
@@ -126,6 +163,9 @@ export default {
       commits: [],
       pullRequests: [],
       issues: [],
+      feedbackText: '',
+      teamId: null, 
+      existingFeedbacks: [],
     };
   },
   created() {
@@ -133,6 +173,50 @@ export default {
     this.fetchTeamDetails(teamId);
   },
   methods: {
+    openFeedbackModal(teamId) {
+      this.teamId = teamId;
+      this.feedbackText = ''; // Clear new feedback text
+      this.fetchFeedbacks(teamId); // Fetch existing feedbacks
+      
+      const feedbackModal = new bootstrap.Modal(document.getElementById('feedbackModal'));
+      feedbackModal.show();
+    },
+    submitFeedbackToAPI() {
+      fetch(`/api/feedback`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          team_id: this.teamId,
+          feedback_text: this.feedbackText,
+          instructor_id: localStorage.getItem('user_id')
+        }),
+      })
+        .then((response) => {
+          if (response.ok) {
+            alert('Feedback submitted successfully!');
+            this.fetchFeedbacks(this.teamId); // Refresh feedback list
+            this.feedbackText = ''; // Clear new feedback input
+          } else {
+            alert('Failed to submit feedback');
+          }
+        })
+        .catch((error) => {
+          console.error('Error submitting feedback:', error);
+        });
+    },
+    fetchFeedbacks(teamId) {
+      fetch(`/api/feedback/${teamId}`)
+        .then((response) => response.json())
+        .then((data) => {
+          this.existingFeedbacks = data; // Populate feedbacks
+        })
+        .catch((error) => {
+          console.error('Error fetching feedbacks:', error);
+        });
+    },
+
     goToGenAI(teamId) {
       this.$router.push({ name: 'gen_ai', params: { teamId } });
     },

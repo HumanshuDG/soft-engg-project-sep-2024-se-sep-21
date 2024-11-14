@@ -133,3 +133,16 @@ class MilestoneSubmit(db.Model):
     team_id = db.Column(db.Integer, db.ForeignKey('team.id'), nullable=False)
     milestone_id = db.Column(db.Integer, db.ForeignKey('milestone.id'), nullable=False)
     submission_date = db.Column(db.DateTime, default=datetime.utcnow)
+
+class Feedback(db.Model):
+    __tablename__ = 'feedback'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    team_id = db.Column(db.Integer, db.ForeignKey('team.id'), nullable=False)
+    instructor_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    feedback_text = db.Column(db.Text, nullable=False)
+    created_on = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    instructor = db.relationship('User', backref='given_feedbacks', lazy=True)
+    team = db.relationship('Team', backref=db.backref('feedbacks', lazy=True))

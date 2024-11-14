@@ -1,6 +1,7 @@
 from flask_restful import Api, Resource, reqparse, fields, marshal_with, request
+from flask import jsonify
 from datetime import datetime
-from application.models import db, User, Role, roles_users, Project, Team, TeamMember, Enrollment, TAAllocation, ProjectSubmit, Milestone, MilestoneSubmit
+from application.models import db, User, Role, roles_users, Project, Team, TeamMember, Enrollment, TAAllocation, ProjectSubmit, Milestone, MilestoneSubmit, Feedback
 
 # Initialize the API
 api = Api(prefix="/api")
@@ -53,6 +54,11 @@ enrollment_check_parser = reqparse.RequestParser()
 enrollment_check_parser.add_argument('student_id', type=int, required=True, help='Student ID cannot be blank')
 enrollment_check_parser.add_argument('project_id', type=int, required=True, help='Project ID cannot be blank')
 
+# Define request parser for feedback creation
+feedback_parser = reqparse.RequestParser()
+feedback_parser.add_argument('team_id', type=int, required=True, help='Team ID is required')
+feedback_parser.add_argument('instructor_id', type=int, required=True, help='Instructor ID is required')
+feedback_parser.add_argument('feedback_text', type=str, required=True, help='Feedback text is required')
 
 # Define fields for marshaling responses
 user_fields = {
@@ -160,6 +166,14 @@ admin_home_fields = {
     'availableTAs': fields.List(fields.Nested(ta_fields))
 }
 
+# Define response fields for marshalling
+feedback_fields = {
+    'id': fields.Integer,
+    'team_id': fields.Integer,
+    'instructor_id': fields.Integer,
+    'feedback_text': fields.String,
+    'created_on': fields.DateTime,
+}
 
 
 # User Resource
@@ -573,6 +587,29 @@ class AdminHomeResource(Resource):
             'projects': project_details,
             'availableTAs': available_tas_list
         }
+    
+class FeedbackResource(Resource):
+    @marshal_with(feedback_fields)
+    def get(self, team_id):
+        """Fetch feedbacks for a specific team."""
+        feedbacks = Feedback.query.filter_by(team_id=team_id).all()
+        if not feedbacks:
+            return {'message': 'No feedbacks found for this team'}, 404
+        return feedbacks, 200
+
+    @marshal_with(feedback_fields)
+    def post(self):
+        """Add new feedback."""
+        args = feedback_parser.parse_args()
+        feedback = Feedback(
+            team_id=args['team_id'],
+            instructor_id=args['instructor_id'],
+            feedback_text=args['feedback_text'],
+            created_on=datetime.utcnow()
+        )
+        db.session.add(feedback)
+        db.session.commit()
+        return feedback, 201
 
 
 
@@ -593,3 +630,6 @@ api.add_resource(EnrollmentCheckResource, '/projects/<int:project_id>/enrollment
 api.add_resource(TAListResource, '/tas')
 api.add_resource(TAHomepageResource, '/ta_homepage/<int:ta_id>')
 api.add_resource(AdminHomeResource, '/admin_home')
+api.add_resource(FeedbackResource, '/feedback', '/feedback/<int:team_id>')
+
+

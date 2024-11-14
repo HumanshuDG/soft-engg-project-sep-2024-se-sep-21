@@ -19,8 +19,8 @@ export default {
         <div class="modal-body">
           <ul class="list-group">
             <li v-for="feedback in feedbacks" :key="feedback.id" class="list-group-item">
-              <p><strong>{{ feedback.author }}:</strong> {{ feedback.comment }}</p>
-              <small class="text-muted">{{ new Date(feedback.date).toLocaleString() }}</small>
+              <p><strong>Instrcutor ID{{ feedback.instructor_id }}:</strong> {{ feedback.feedback_text }}</p>
+              <small class="text-muted">{{ new Date(feedback.created_on).toLocaleString() }}</small>
             </li>
           </ul>
         </div>
@@ -169,7 +169,7 @@ export default {
     methods: {
       openFeedbackModal() {
         // Fetch feedbacks from API
-        fetch(`/api/teams/${this.team.id}/feedbacks`)
+        fetch(`/api/feedback/${this.team.id}`)
           .then((response) => response.json())
           .then((data) => {
             this.feedbacks = data;
@@ -203,6 +203,7 @@ export default {
           if (response.ok) {
             const data = await response.json();
             this.milestones = data;
+            console.log(data)
           } else {
             console.error("Failed to fetch milestones.");
           }
