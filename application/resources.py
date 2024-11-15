@@ -611,6 +611,31 @@ class FeedbackResource(Resource):
         db.session.commit()
         return feedback, 201
 
+class MilestoneSubmitsByTeamResource(Resource):
+    def get(self, team_id):
+        submissions = (
+            db.session.query(
+                MilestoneSubmit.id,
+                MilestoneSubmit.team_id,
+                MilestoneSubmit.milestone_id,
+                MilestoneSubmit.submission_date,
+                Milestone.deadline
+            )
+            .join(Milestone, Milestone.id == MilestoneSubmit.milestone_id)
+            .filter(MilestoneSubmit.team_id == team_id)
+            .all()
+        )
+        
+        result = []
+        for submission in submissions:
+            result.append({
+                'id': submission.id,
+                'team_id': submission.team_id,
+                'milestone_id': submission.milestone_id,
+                'submission_date': submission.submission_date,
+                'milestone_deadline': submission.deadline.isoformat()
+            })
+        return jsonify(result)
 
 
 
@@ -631,5 +656,7 @@ api.add_resource(TAListResource, '/tas')
 api.add_resource(TAHomepageResource, '/ta_homepage/<int:ta_id>')
 api.add_resource(AdminHomeResource, '/admin_home')
 api.add_resource(FeedbackResource, '/feedback', '/feedback/<int:team_id>')
+api.add_resource(MilestoneSubmitsByTeamResource, '/teams/<int:team_id>/milestone_submits')
+
 
 

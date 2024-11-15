@@ -65,6 +65,34 @@ export default {
               <li v-for="member in team.members" :key="member.id">{{ member.name }}</li>
             </ul>
           </div>
+
+        <!-- Milestone Submission Status Section -->
+        <h4 class="mb-4 text-center">Milestone Submission Status</h4>
+        <div v-if="milestones.length" class="table-responsive">
+          <table class="table table-striped">
+            <thead>
+              <tr>
+                <th>Milestone</th>
+                <th>Deadline</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="milestone in milestones" :key="milestone.id">
+                <td>{{ milestone.milestoneId }}</td>
+                <td>{{ new Date(milestone.deadline).toLocaleDateString() }}</td>
+                <td>
+                  <span class="badge" :class="milestone.submitted ? 'bg-success' : 'bg-success'">
+                    {{ milestone.submitted ? 'Submitted' : 'Submitted' }}
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div v-else>
+          <p class="text-center">No milestones available for this team.</p>
+        </div>
         </div>
         <h2 class="mb-4 text-center">GitHub Repo Details</h2>
         <!-- Row for Commits, Pull Requests, and Issues with scrollable cards -->
@@ -166,13 +194,48 @@ export default {
       feedbackText: '',
       teamId: null, 
       existingFeedbacks: [],
+      milestones: [] // Milestones data
     };
   },
   created() {
     const teamId = this.$route.params.teamId;
     this.fetchTeamDetails(teamId);
+    this.fetchMilestones(teamId); 
   },
   methods: {
+    fetchMilestones(teamId) {
+      fetch(`/api/teams/${teamId}/milestone_submits`)
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`Failed to fetch milestones for team ${teamId}`);
+          }
+          return response.json();
+        })
+        .then(data => {
+          // Group submissions by milestone_id
+          const groupedMilestones = data.reduce((acc, item) => {
+            if (!acc[item.milestone_id]) {
+              acc[item.milestone_id] = {
+                milestoneId: item.milestone_id,
+                deadline: new Date(item.milestone_deadline).toLocaleDateString(),
+                submissions: [],
+              };
+            }
+            acc[item.milestone_id].submissions.push({
+              submissionId: item.id,
+              submissionDate: item.submission_date
+                ? new Date(item.submission_date).toLocaleString()
+                : 'Not submitted',
+            });
+            return acc;
+          }, {});
+    
+          this.milestones = Object.values(groupedMilestones);
+        })
+        .catch(error => {
+          console.error('Error fetching milestones:', error);
+        });
+    },
     openFeedbackModal(teamId) {
       this.teamId = teamId;
       this.feedbackText = ''; // Clear new feedback text

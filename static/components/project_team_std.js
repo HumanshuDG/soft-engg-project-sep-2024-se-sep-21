@@ -68,7 +68,7 @@ export default {
     <!-- Right Box: Statistics and Charts -->
     <div class="col-md-8">
       <!-- Make this section scrollable -->
-      <div class="overflow-auto" style="max-height: 500px; padding-right: 10px;">
+      <div class="overflow-auto" style="max-height: 1000px; padding-right: 10px;">
         <!-- Commits per Day Chart -->
         <div class="card mb-4">
           <div class="card-header bg-info text-white">Commits per Day</div>
@@ -201,9 +201,11 @@ export default {
         try {
           const response = await fetch(`/api/milestones_list?project_id=${projectId}`);
           if (response.ok) {
-            const data = await response.json();
-            this.milestones = data;
-            console.log(data)
+            const milestones = await response.json();
+            this.milestones = milestones;
+      
+            // Fetch milestone submissions for the current team
+            this.fetchMilestoneSubmissions();
           } else {
             console.error("Failed to fetch milestones.");
           }
@@ -211,9 +213,58 @@ export default {
           console.error("Error fetching milestones:", error);
         }
       },
+      
+      async fetchMilestoneSubmissions() {
+        try {
+          const response = await fetch(`/api/teams/${this.team.id}/milestone_submits`);
+          if (response.ok) {
+            const submissions = await response.json();
+            
+            // Mark milestones as submitted based on submissions
+            this.milestones.forEach(milestone => {
+              milestone.submitted = submissions.some(submission => submission.milestone_id === milestone.id);
+            });
+          } else {
+            console.error("Failed to fetch milestone submissions.");
+          }
+        } catch (error) {
+          console.error("Error fetching milestone submissions:", error);
+        }
+      },
+
       formatDate(date) {
         const d = new Date(date);
         return d.toLocaleDateString();
+      },
+
+      submitMilestone(milestone) {
+        fetch(`/api/milestone_submits`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            team_id: this.team.id,
+            milestone_id: milestone.id,
+          }),
+        })
+          .then((response) => {
+            if (response.ok) {
+              alert('Milestone marked as submitted!');
+              
+              // Immediately update the submitted status in the UI
+              this.milestones = this.milestones.map((m) =>
+                m.id === milestone.id ? { ...m, submitted: true } : m
+              );
+            } else {
+              return response.json().then((error) => {
+                throw new Error(error.message || 'Failed to mark milestone as submitted');
+              });
+            }
+          })
+          .catch((error) => {
+            console.error('Error submitting milestone:', error);
+          });
       },
 
       async fetchGitHubData(repoUrl) {
