@@ -68,7 +68,7 @@ export default {
     <!-- Right Box: Statistics and Charts -->
     <div class="col-md-8">
       <!-- Make this section scrollable -->
-      <div class="overflow-auto" style="max-height: 1000px; padding-right: 10px;">
+      <div class="overflow-auto" style="max-height: 500px; padding-right: 10px;">
         <!-- Commits per Day Chart -->
         <div class="card mb-4">
           <div class="card-header bg-info text-white">Commits per Day</div>
