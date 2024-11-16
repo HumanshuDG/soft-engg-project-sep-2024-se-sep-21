@@ -540,6 +540,10 @@ export default {
     openEditModal(project) {
       this.selectedProject = { ...project };
       this.editModalVisible = true;
+      if (this.selectedProject.deadline) {
+        const date = new Date(this.selectedProject.deadline);
+        this.selectedProject.deadline = date.toISOString().split('T')[0];
+      }
     },
   
     closeEditModal() {
@@ -561,9 +565,31 @@ export default {
       this.showModal = false;
       this.resetNewProject();
     },
-  
+    
+    validateProjectInputs(minTeammates, maxTeammates, deadline) {
+      // Validate minimum and maximum teammates
+      if (minTeammates > maxTeammates) {
+        alert("Minimum teammates must be less than or equal to maximum teammates.");
+        return false;
+      }
+
+      // Validate deadline
+      const currentDate = new Date();
+      const enteredDate = new Date(deadline);
+      if (!deadline || enteredDate < currentDate.setHours(0, 0, 0, 0)) {
+        alert("Deadline must not be empty and should be a future or current date.");
+        return false;
+      }
+
+      return true;
+    },
+
     async createProject() {
       try {
+        if (!this.validateProjectInputs(this.newProject.min_teammates, this.newProject.max_teammates, this.newProject.deadline)) {
+          return;
+        }
+
         const response = await fetch('/api/projects', {
           method: 'POST',
           headers: {
@@ -586,6 +612,10 @@ export default {
   
     async updateProject() {
       try {
+        if (!this.validateProjectInputs(this.selectedProject.min_teammates, this.selectedProject.max_teammates,this.selectedProject.deadline)) {
+          return;
+        }
+
         const response = await fetch(`/api/projects/${this.selectedProject.id}`, {
           method: 'PUT',
           headers: {
