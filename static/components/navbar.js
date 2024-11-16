@@ -76,6 +76,10 @@ export default {
       localStorage.removeItem('Authentication-Token');
       localStorage.removeItem('role');
       localStorage.removeItem('user_id');
+      localStorage.removeItem('reportData');
+      localStorage.removeItem('github_token');
+      document.cookie = "github_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
+
       this.$router.push({ path: '/login' });
     },
 

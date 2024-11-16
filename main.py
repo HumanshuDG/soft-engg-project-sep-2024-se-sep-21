@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, redirect
 from config import DevelopmentConfig
 from application.models import db
 from application.secondry import datastore
@@ -107,6 +107,43 @@ def genai_analysis():
     except Exception as e:
         print(f"Error during analysis: {e}")
         return jsonify({"error": "Internal server error"}), 500
+
+#Github Auth
+# Your GitHub OAuth credentials
+CLIENT_ID = 'Ov23liy5AM4qoqFHMgkl'  # Replace with your actual GitHub Client ID
+CLIENT_SECRET = 'fa24969a907342ea2025f912fa233371ff865a4b'  # Replace with your actual GitHub Client Secret
+
+from flask import make_response
+
+@app.route('/oauth/callback', methods=['GET'])
+def github_oauth_callback():
+    code = request.args.get('code')
+    if not code:
+        return jsonify({"error": "Missing authorization code"}), 400
+
+    github_url = 'https://github.com/login/oauth/access_token'
+    data = {
+        'client_id': CLIENT_ID,
+        'client_secret': CLIENT_SECRET,
+        'code': code
+    }
+
+    response = requests.post(github_url, data=data, headers={'Accept': 'application/json'})
+
+    if response.status_code != 200:
+        return jsonify({"error": "Failed to exchange code for token"}), 400
+
+    token_data = response.json()
+    access_token = token_data.get('access_token')
+
+    if not access_token:
+        return jsonify({"error": "Access token not found"}), 400
+
+    # Store token in cookie
+    resp = make_response(redirect("http://127.0.0.1:5000/#/instructor_home"))
+    resp.set_cookie('github_token', access_token)  # Set the cookie with the access token
+
+    return resp
 
 if __name__ == '__main__':
     app.run(debug=True)

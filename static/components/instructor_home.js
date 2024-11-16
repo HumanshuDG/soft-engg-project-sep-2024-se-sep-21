@@ -4,6 +4,12 @@ export default {
       <div class="row">
         <div class="col-md-12">
           <h3>Welcome Instructor: {{ instructorName }}!</h3>
+
+          <!-- Show GitHub authentication button if not authenticated -->
+          <button v-if="!isAuthenticated" class="btn btn-dark" @click="loginWithGitHub">Authenticate with GitHub</button>  
+          <!-- Show logout button if authenticated -->
+          <button v-if="isAuthenticated" class="btn btn-danger" @click="logoutFromGitHub">Logout from GitHub</button>
+
           <button class="btn btn-primary float-end" @click="showModal = true">Create Project</button>
         </div>
       </div>
@@ -240,6 +246,7 @@ export default {
   `,
   data() {
     return {
+      isAuthenticated: false, 
       projects: [],
       showModal: false,
       editModalVisible: false,
@@ -279,9 +286,68 @@ export default {
   created() {
     this.fetchProjects();
     this.fetchInstructorName();
+    this.handleGitHubCallback();
+    this.checkAuthentication(); 
   },
   
   methods: {
+    loginWithGitHub() {
+      const clientId = 'Ov23liy5AM4qoqFHMgkl';
+      const redirectUri = encodeURIComponent(window.location.origin + '/oauth/callback');
+      const scope = 'repo user';
+
+      const authUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&scope=${scope}`;
+      window.location.href = authUrl;
+    },
+
+        // Check if the user is authenticated
+        checkAuthentication() {
+          const token = this.getCookie('github_token'); // Check if the github_token cookie is present
+          this.isAuthenticated = token !== null; // Set isAuthenticated based on the presence of the token
+        },
+    
+        // Get cookie value by name
+        getCookie(name) {
+          const value = `; ${document.cookie}`;
+          const parts = value.split(`; ${name}=`);
+          if (parts.length === 2) return parts.pop().split(';').shift();
+          return null;  // Return null if the cookie is not found
+        },
+    
+        // Logout from GitHub
+        logoutFromGitHub() {
+          // Clear the GitHub token cookie and localStorage
+          document.cookie = "github_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
+          localStorage.removeItem('github_token');
+          
+          // Set the authentication status to false
+          this.isAuthenticated = false;
+          
+          // Redirect user to login or another page
+          this.$router.push({ path: '/instructor_home' });
+        },
+
+    handleGitHubCallback() {
+      // Function to get a cookie by name
+      function getCookie(name) {
+        let match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+        if (match) return match[2];
+        return null;
+      }
+  
+      // Check for 'github_token' cookie after redirect
+      const token = getCookie('github_token');
+      
+      if (token) {
+        // Store the token in localStorage
+        localStorage.setItem('github_token', token);
+        console.log('GitHub token saved to localStorage:', token);
+  
+        // Redirect the user to the appropriate page
+        window.location.href = '#/instructor_home'; // Redirect after successful login
+      }
+    },
+
     viewTeam(teamId) {
       this.$router.push({ name: 'project_team', params: { teamId } });
   },
