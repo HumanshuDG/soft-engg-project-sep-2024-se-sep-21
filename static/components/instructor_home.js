@@ -292,7 +292,7 @@ export default {
   
   methods: {
     loginWithGitHub() {
-      const clientId = 'Ov23liy5AM4qoqFHMgkl';
+      const clientId = 'Ov23liKVYMe97F4UGF34';
       const redirectUri = encodeURIComponent(window.location.origin + '/oauth/callback');
       const scope = 'repo user';
 

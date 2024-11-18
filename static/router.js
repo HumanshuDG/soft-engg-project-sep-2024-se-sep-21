@@ -12,6 +12,7 @@ import ta_dashboard from './components/ta_dashboard.js';
 import notifications from './components/notifications.js';
 import ta_home from './components/ta_home.js';
 import admin_home from './components/admin_home.js';
+import default_home from './components/default_home.js'; // Import the default_home component
 
 
 const routes = [
@@ -29,6 +30,8 @@ const routes = [
     { path: '/ta_dashboard', component: ta_dashboard, name:'ta_dashboard'},
     { path: '/notifications', name: 'notifications',component: notifications},    
     { path: '/admin_home', component: admin_home},
+    { path: '/default_home', component: default_home, name: 'default_home'}, // Add this route
+
 ]
 
 

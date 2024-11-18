@@ -110,10 +110,11 @@ def genai_analysis():
 
 #Github Auth
 # Your GitHub OAuth credentials
-CLIENT_ID = 'Ov23liy5AM4qoqFHMgkl'  # Replace with your actual GitHub Client ID
-CLIENT_SECRET = 'fa24969a907342ea2025f912fa233371ff865a4b'  # Replace with your actual GitHub Client Secret
+CLIENT_ID = 'Ov23liKVYMe97F4UGF34'  # Replace with your actual GitHub Client ID
+CLIENT_SECRET = 'f5c147cd2d9a59218d607c99ff4d779452a883fa'  # Replace with your actual GitHub Client Secret
 
 from flask import make_response
+from application.models import User
 
 @app.route('/oauth/callback', methods=['GET'])
 def github_oauth_callback():
@@ -140,10 +141,53 @@ def github_oauth_callback():
         return jsonify({"error": "Access token not found"}), 400
 
     # Store token in cookie
-    resp = make_response(redirect("http://127.0.0.1:5000/#/instructor_home"))
+    resp = make_response(redirect("http://127.0.0.1:5000/oauth/success"))
     resp.set_cookie('github_token', access_token)  # Set the cookie with the access token
 
     return resp
+
+@app.route('/oauth/success', methods=['GET'])
+def oauth_success():
+    # Render a simple HTML page or return a response with JS
+    return """
+        <html>
+        <head>
+            <script>
+                // Wait until the page is fully loaded
+                window.onload = function() {
+                    // Fetch the GitHub token from the cookie
+                    const token = document.cookie.replace(/(?:(?:^|.*;\s*)github_token\s*\=\s*([^;]*).*$)|^.*$/, "$1");
+                    
+                    if (!token) {
+                        alert('GitHub token not found. Please try logging in again.');
+                        return;
+                    }
+                    
+                    // Store the token in localStorage for Vue.js to access
+                    localStorage.setItem('github_token', token);
+                    
+                    // Now redirect based on user role
+                    // Simulate an API call or check the role
+                    // For simplicity, assuming we have the role available (you can fetch this from an endpoint)
+                    const role = localStorage.getItem('role');  // Assuming role is stored in localStorage
+                    
+                    if (role === 'student') {
+                        window.location.href = '/#/student_home';
+                    } else if (role === 'instructor') {
+                        window.location.href = '/#/instructor_home';
+                    } else if (role === 'TA') {
+                        window.location.href = '/#/ta_home';
+                    } else {
+                        window.location.href = '/#/default_home';  // Default page if no role is found
+                    }
+                }
+            </script>
+        </head>
+        <body>
+            Authentication with Github Sucessfull....
+        </body>
+        </html>
+    """
 
 if __name__ == '__main__':
     app.run(debug=True)
