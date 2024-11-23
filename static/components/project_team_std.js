@@ -80,10 +80,18 @@ export default {
         <!-- Pie Charts Row -->
         <div class="row">
           <div class="col-md-6">
-            <div class="card mb-4">
-              <div class="card-header bg-success text-white">Pull Requests by User</div>
+            <div class="card">
+              <div class="card-header bg-secondary text-white">Commits by User</div>
               <div class="card-body">
-                <canvas id="pullRequestsChart"></canvas>
+                <canvas id="commitsByUserChart"></canvas>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="card">
+              <div class="card-header bg-danger text-white">Closed Issues</div>
+              <div class="card-body">
+                <canvas id="closedIssuesChart"></canvas>
               </div>
             </div>
           </div>
@@ -95,6 +103,15 @@ export default {
               </div>
             </div>
           </div>
+          <div class="col-md-6">
+            <div class="card mb-4">
+              <div class="card-header bg-success text-white">Pull Requests by User</div>
+              <div class="card-body">
+                <canvas id="pullRequestsChart"></canvas>
+              </div>
+            </div>
+          </div>
+          
         </div>
       </div>
     </div>
@@ -148,6 +165,21 @@ export default {
           </a>
         </div>
       </div>
+       <!-- Closed Issues -->
+        <div class="card">
+          <div class="card-header bg-secondary text-white">Closed Issues</div>
+          <div class="list-group list-group-flush overflow-auto" style="max-height: 300px;">
+            <a
+              v-for="issue in closedIssues"
+              :key="issue.id"
+              :href="issue.html_url"
+              target="_blank"
+              class="list-group-item list-group-item-action"
+            >
+              {{ issue.title }} by {{ issue.user.login }}
+            </a>
+          </div>
+        </div>
     </div>
   </div>
 </div>
@@ -158,6 +190,7 @@ export default {
         commits: [],
         pullRequests: [],
         issues: [],
+        closedIssues: [],
         milestones: [],
         feedbacks: [],
       };
@@ -269,54 +302,118 @@ export default {
 
       async fetchGitHubData(repoUrl) {
         const repoName = repoUrl.split("github.com/")[1];
-    
+        const accessToken = localStorage.getItem("github_token"); // Retrieve the token from local storage
+      
+        // Define headers only if the token is available
+        const headers = accessToken
+          ? {
+              Authorization: `Bearer ${accessToken}`,
+              Accept: "application/vnd.github.v3+json",
+            }
+          : {
+              Accept: "application/vnd.github.v3+json",
+            };
+      
+        // Helper function to handle fetch requests
+        const fetchData = async (url) => {
+          try {
+            const response = await fetch(url, { headers });
+            if (response.ok) {
+              return await response.json();
+            } else {
+              console.error(`Error fetching from ${url}:`, response.status, response.statusText);
+              return null;
+            }
+          } catch (error) {
+            console.error(`Error fetching from ${url}:`, error);
+            return null;
+          }
+        };
+      
         // Fetch recent commits
-        try {
-          const commitsResponse = await fetch(`https://api.github.com/repos/${repoName}/commits`);
-          if (commitsResponse.ok) {
-            this.commits = await commitsResponse.json();
-            this.setupCommitsChart();
-          }
-        } catch (error) {
-          console.error("Error fetching commits:", error);
+        const commitsUrl = `https://api.github.com/repos/${repoName}/commits`;
+        const commitsData = await fetchData(commitsUrl);
+        if (commitsData) {
+          this.commits = commitsData;
+          this.setupCommitsChart();
         }
-    
+      
         // Fetch open pull requests
-        try {
-          const prsResponse = await fetch(`https://api.github.com/repos/${repoName}/pulls?state=open`);
-          if (prsResponse.ok) {
-            this.pullRequests = await prsResponse.json();
-            this.setupPullRequestsChart();
-          }
-        } catch (error) {
-          console.error("Error fetching pull requests:", error);
+        const pullRequestsUrl = `https://api.github.com/repos/${repoName}/pulls?state=open`;
+        const pullRequestsData = await fetchData(pullRequestsUrl);
+        if (pullRequestsData) {
+          this.pullRequests = pullRequestsData;
+          this.setupPullRequestsChart();
         }
-    
+      
         // Fetch open issues
-        try {
-          const issuesResponse = await fetch(`https://api.github.com/repos/${repoName}/issues?state=open`);
-          if (issuesResponse.ok) {
-            this.issues = await issuesResponse.json();
-            this.setupIssuesChart();
-          }
-        } catch (error) {
-          console.error("Error fetching issues:", error);
+        const openIssuesUrl = `https://api.github.com/repos/${repoName}/issues?state=open`;
+        const openIssuesData = await fetchData(openIssuesUrl);
+        if (openIssuesData) {
+          this.issues = openIssuesData;
+          this.setupIssuesChart();
+        }
+      
+        // Fetch closed issues
+        const closedIssuesUrl = `https://api.github.com/repos/${repoName}/issues?state=closed`;
+        const closedIssuesData = await fetchData(closedIssuesUrl);
+        if (closedIssuesData) {
+          this.closedIssues = closedIssuesData;
+          this.setupClosedIssuesChart();
         }
       },
+      
+      
       setupCommitsChart() {
+        // Commits Per Day Chart
         const dates = this.commits.map(commit => new Date(commit.commit.author.date).toLocaleDateString());
         const commitsPerDay = dates.reduce((counts, date) => {
           counts[date] = (counts[date] || 0) + 1;
           return counts;
         }, {});
-  
+      
+        // Render the "Commits Per Day" bar chart
         new Chart(document.getElementById("commitsChart"), {
           type: "bar",
           data: {
             labels: Object.keys(commitsPerDay),
-            datasets: [{ label: "Commits", data: Object.values(commitsPerDay), backgroundColor: "rgba(0, 123, 255, 0.6)" }]
+            datasets: [
+              {
+                label: "Commits",
+                data: Object.values(commitsPerDay),
+                backgroundColor: "rgba(0, 123, 255, 0.6)"
+              }
+            ]
           },
-          options: {indexAxis: 'y', responsive: true, scales: { x: { beginAtZero: true } } }
+          options: {
+            indexAxis: "y",
+            responsive: true,
+            scales: {
+              x: { beginAtZero: true }
+            }
+          }
+        });
+      
+        // Commits by User Chart
+        const userCommits = this.commits.reduce((counts, commit) => {
+          const author = commit.author ? commit.author.login : "Unknown";
+          counts[author] = (counts[author] || 0) + 1;
+          return counts;
+        }, {});
+      
+        // Render the "Commits by User" pie chart
+        new Chart(document.getElementById("commitsByUserChart"), {
+          type: "pie",
+          data: {
+            labels: Object.keys(userCommits),
+            datasets: [
+              {
+                data: Object.values(userCommits),
+                backgroundColor: ["#007bff", "#28a745", "#ffc107", "#dc3545", "#17a2b8"]
+              }
+            ]
+          },
+          options: { responsive: true }
         });
       },
       setupPullRequestsChart() {
@@ -348,7 +445,22 @@ export default {
           },
           options: { responsive: true }
         });
-      }
+      },
+          // New Chart for Closed Issues
+    setupClosedIssuesChart() {
+      const userCounts = this.closedIssues.reduce((counts, issue) => {
+        counts[issue.user.login] = (counts[issue.user.login] || 0) + 1;
+        return counts;
+      }, {});
+
+      new Chart(document.getElementById("closedIssuesChart"), {
+        type: "pie",
+        data: {
+          labels: Object.keys(userCounts),
+          datasets: [{ data: Object.values(userCounts), backgroundColor: ["#ff0000", "#ff6600", "#33cc33", "#3399ff"] }],
+        },
+        options: { responsive: true },
+      });
     }
-  };
-  
+  },
+};
