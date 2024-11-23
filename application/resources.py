@@ -178,17 +178,19 @@ feedback_fields = {
 
 # User Resource
 class UserResource(Resource):
-    @marshal_with(user_fields)
     def get(self, user_id):
-        user = User.query.get_or_404(user_id)
-        return user
+        user = User.query.get(user_id)
+        if user:
+            return marshal_with(user_fields)(lambda: user)()
+        else:
+            return {"error": "User not found", "user_id": user_id}, 404
 
     @marshal_with(user_fields)
     def post(self):
         args = user_parser.parse_args()
         user = User(
             github_id=args['github_id'],
-            username=args['name'],
+            name=args['name'],
             email=args['email'],
             password=args['password'],
             account_created=datetime.utcnow()
@@ -208,7 +210,7 @@ class UserResource(Resource):
         args = user_parser.parse_args()
 
         # Update the fields with the new values
-        user.username = args['name']
+        user.name = args['name']
         user.github_id = args['github_id']
 
         # Commit the changes to the database
