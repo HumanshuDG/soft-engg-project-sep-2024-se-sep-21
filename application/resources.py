@@ -294,7 +294,7 @@ class TeamResource(Resource):
         db.session.delete(team)
         db.session.commit()
         return {'message': 'Team deleted successfully'}, 204
-
+#Enrollment
 class EnrollmentResource(Resource):
     @marshal_with(enrollment_fields)
     def get(self, enrollment_id=None):

@@ -64,7 +64,7 @@ class Team(db.Model):
     created_on = db.Column(db.DateTime, default=datetime.utcnow)
     repo = db.Column(db.String(100), nullable=True)
     
-    # Relationships
+    # Relationships 
     enrollments = db.relationship('Enrollment', backref='team', lazy=True)
     ta_allocations = db.relationship('TAAllocation', backref='team', lazy=True)
     submissions = db.relationship('ProjectSubmit', backref='team', lazy=True)
