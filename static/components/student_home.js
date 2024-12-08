@@ -249,7 +249,7 @@ export default {
           this.isAuthenticated = false;
           
           // Redirect user to login or another page
-          this.$router.push({ path: '/instructor_home' });
+          this.$router.push({ path: '/student_home' });
         },
 
     handleGitHubCallback() {
