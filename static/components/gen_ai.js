@@ -209,8 +209,16 @@ export default {
     async fetchRepoContents(path = '') {
       this.currentPath = path; // Update current path
       const url = `https://api.github.com/repos/${this.repoName}/contents/${path}`;
+      const headers = {};
+    
+      // Check for GitHub token in localStorage
+      const token = localStorage.getItem('github_token');
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+    
       try {
-        const response = await fetch(url);
+        const response = await fetch(url, { headers });
         if (response.ok) {
           const data = await response.json();
           this.repoStructure = data; // Store the fetched structure
@@ -221,6 +229,7 @@ export default {
         console.error("Error fetching repository contents:", error);
       }
     },
+    
     async fetchChildItems(item) {
       if (item.type === 'dir') {
         await this.fetchRepoContents(item.path);
@@ -232,12 +241,20 @@ export default {
     },
     async fetchFileContent(filePath) {
       const url = `https://api.github.com/repos/${this.repoName}/contents/${filePath}`;
+      const headers = {};
+    
+      // Check for GitHub token in localStorage
+      const token = localStorage.getItem('github_token');
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+    
       try {
-        const response = await fetch(url);
+        const response = await fetch(url, { headers });
         if (response.ok) {
           const data = await response.json();
           if (data.content) {
-            this.fileContent = atob(data.content); // Assuming the file is text
+            this.fileContent = atob(data.content); // Decode base64 content
             this.currentPath = filePath;  // Set the current path when a file is clicked
             console.log("Current Path:", this.currentPath); // Debugging log
           }
@@ -248,6 +265,7 @@ export default {
         console.error("Error fetching file content:", error);
       }
     },
+    
     async submitReport() {
       try {
         const response = await fetch('/api/submit-report', {
