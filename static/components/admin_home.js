@@ -216,7 +216,7 @@ export default {
       
       generateTeamsPerProjectGraph() {
         const projectNames = this.projects.map(project => project.name);
-        const teamsData = this.projects.map(project => project.teams.length);
+        const teamsData = this.projects.map(project => project.teams);
       
         const chartConfig = {
           type: 'bar',
