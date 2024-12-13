@@ -13,6 +13,7 @@ import notifications from './components/notifications.js';
 import ta_home from './components/ta_home.js';
 import admin_home from './components/admin_home.js';
 import default_home from './components/default_home.js'; // Import the default_home component
+import team_report from './components/team_report.js'; // Adjust the path to your TeamReports component
 
 
 const routes = [
@@ -31,6 +32,7 @@ const routes = [
     { path: '/notifications', name: 'notifications',component: notifications},    
     { path: '/admin_home', component: admin_home},
     { path: '/default_home', component: default_home, name: 'default_home'}, // Add this route
+    { path: '/team_report', component: team_report, name: 'team_report' },
 
 ]
 

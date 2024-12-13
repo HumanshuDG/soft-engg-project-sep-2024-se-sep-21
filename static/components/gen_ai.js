@@ -33,27 +33,27 @@ export default {
               <h3>Submit Report</h3>
               <form @submit.prevent="submitReport">
                 <div class="mb-3">
-                  <label for="scoreAnalysis" class="form-label">Score from Analysis</label>
+                  <label for="scoreAnalysis" class="form-label">Functionality-Focused Analysis</label>
                   <input
                     v-model="reportData.scoreAnalysis"
                     type="number"
                     class="form-control"
                     id="scoreAnalysis"
-                    placeholder="Enter score from analysis"
+                    placeholder="score for analysis"
                   />
                 </div>
                 <div class="mb-3">
-                  <label for="scoreRate" class="form-label">Score from Rate</label>
+                  <label for="scoreRate" class="form-label">Code cleanliness and clarity</label>
                   <input
                     v-model="reportData.scoreRate"
                     type="number"
                     class="form-control"
                     id="scoreRate"
-                    placeholder="Enter score from rate"
+                    placeholder="score for clarity"
                   />
                 </div>
                 <div class="mb-3">
-                  <label for="feedback" class="form-label">Feedback</label>
+                  <label for="feedback" class="form-label">GenAI Feedback</label>
                   <textarea
                     v-model="reportData.feedback"
                     class="form-control"
@@ -80,8 +80,8 @@ export default {
               <!-- GenAI Tool Buttons for Analysis -->
               <div class="button-group mt-2">
                 <button class="btn btn-primary mt-2" @click="submitAnalysis('summarize')">Summarize</button>
-                <button class="btn btn-primary mt-2" @click="submitAnalysis('analyze')">Analyze</button>
-                <button class="btn btn-primary mt-2" @click="submitAnalysis('rate')">Rate</button>
+                <button class="btn btn-primary mt-2" @click="submitAnalysis('analyze')">Code Analyze</button>
+                <button class="btn btn-primary mt-2" @click="submitAnalysis('rate')">Code Clarity</button>
                 <button class="btn btn-primary mt-2" @click="submitAnalysis('feedback')">Feedback</button>
               </div>
               
@@ -268,14 +268,28 @@ export default {
     
     async submitReport() {
       try {
-        const response = await fetch('/api/submit-report', {
+        // Prepare the data to be sent
+        const reportData = {
+          teamId: this.teamId,
+          instructorId: localStorage.getItem('user_id'),  // Assuming you have instructorId available
+          file: this.currentPath.split('/').pop(),  // Get the file name from currentPath
+          scoreAnalysis: this.reportData.scoreAnalysis,
+          scoreRate: this.reportData.scoreRate,
+          feedback: this.reportData.feedback
+        };
+  
+        // Make the API call to submit the report
+        const response = await fetch('/api/genai-reports', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(this.reportData)
+          body: JSON.stringify(reportData)
         });
-
+  
         if (response.ok) {
-          alert('Report submitted successfully!');
+          const responseData = await response.json();
+          alert(responseData.message || 'Report submitted successfully!');
+          
+          // Reset the form data after submission
           localStorage.removeItem('reportData');
           this.reportData = {
             scoreAnalysis: null,
@@ -283,13 +297,14 @@ export default {
             feedback: ''
           };
         } else {
-          alert('Failed to submit report. Please try again.');
+          const errorData = await response.json();
+          alert(errorData.error || 'Failed to submit report.');
         }
       } catch (error) {
         console.error('Error submitting report:', error);
         alert('An error occurred. Please try again.');
       }
-    },
+    }
 
   },
 

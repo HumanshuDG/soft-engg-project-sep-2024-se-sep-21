@@ -44,6 +44,10 @@ export default {
             <strong>GitHub Repo:</strong>
             <a :href="team.repo" target="_blank" rel="noopener noreferrer">{{ team.repo }}</a>
           </p>
+          <!-- New Project Reports Button -->
+          <button class="btn btn-outline-primary mt-3" @click="viewProjectReports(team.id)">
+            <i class="fa-solid fa-file"></i> Project Reports
+          </button>
           <h6>Members:</h6>
           <ul>
             <li v-for="member in team.members" :key="member.id">{{ member.name }}</li>
@@ -200,6 +204,24 @@ export default {
       this.fetchTeamDetails(teamId);
     },
     methods: {
+      viewProjectReports(teamId) {
+        this.$router.push({ name: 'team_report', params: { teamId } });
+      },
+      async fetchTeamDetails(teamId) {
+        try {
+          const response = await fetch(`/api/teams/${teamId}`);
+          if (response.ok) {
+            const data = await response.json();
+            this.team = data;
+            this.fetchGitHubData(data.repo);
+          } else {
+            console.error("Failed to fetch team details.");
+          }
+        } catch (error) {
+          console.error("Error fetching team details:", error);
+        }
+      },
+      
       openFeedbackModal() {
         // Fetch feedbacks from API
         fetch(`/api/feedback/${this.team.id}`)

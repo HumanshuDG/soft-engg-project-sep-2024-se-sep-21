@@ -1,7 +1,7 @@
 from flask_restful import Api, Resource, reqparse, fields, marshal_with, request
 from flask import jsonify
 from datetime import datetime
-from application.models import db, User, Role, roles_users, Project, Team, TeamMember, Enrollment, TAAllocation, ProjectSubmit, Milestone, MilestoneSubmit, Feedback
+from application.models import db, User, Role, roles_users, Project, Team, TeamMember, Enrollment, TAAllocation, ProjectSubmit, Milestone, MilestoneSubmit, Feedback, GenAIReport
 
 # Initialize the API
 api = Api(prefix="/api")
@@ -59,6 +59,16 @@ feedback_parser = reqparse.RequestParser()
 feedback_parser.add_argument('team_id', type=int, required=True, help='Team ID is required')
 feedback_parser.add_argument('instructor_id', type=int, required=True, help='Instructor ID is required')
 feedback_parser.add_argument('feedback_text', type=str, required=True, help='Feedback text is required')
+
+# Parser for report submission
+genai_report_parser = reqparse.RequestParser()
+genai_report_parser.add_argument('teamId', type=str, required=True, help="Team ID is required")
+genai_report_parser.add_argument('instructorId', type=str, required=True, help="Instructor ID is required")
+genai_report_parser.add_argument('file', type=str, required=True, help="File name is required")
+genai_report_parser.add_argument('scoreAnalysis', type=float, required=False, help="Score analysis")
+genai_report_parser.add_argument('scoreRate', type=float, required=False, help="Score rate")
+genai_report_parser.add_argument('feedback', type=str, required=False, help="Feedback text")
+
 
 # Define fields for marshaling responses
 user_fields = {
@@ -172,6 +182,18 @@ feedback_fields = {
     'team_id': fields.Integer,
     'instructor_id': fields.Integer,
     'feedback_text': fields.String,
+    'created_on': fields.DateTime,
+}
+
+# Define the fields for marshaling the GenAIReport responses
+genai_report_fields = {
+    'id': fields.Integer,
+    'team_id': fields.Integer,
+    'instructor_id': fields.Integer,
+    'file': fields.String,
+    'assessment': fields.Float,
+    'code_clarity': fields.Float,
+    'feedback': fields.String,
     'created_on': fields.DateTime,
 }
 
@@ -639,6 +661,71 @@ class MilestoneSubmitsByTeamResource(Resource):
             })
         return jsonify(result)
 
+# GenAIReport Resource (Submit and Fetch Reports)
+class GenAIReportResource(Resource):
+    @marshal_with(genai_report_fields)
+    def post(self):
+        args = genai_report_parser.parse_args()
+        
+        # Create a new GenAIReport entry
+        report = GenAIReport(
+            team_id=args['teamId'],
+            instructor_id=args['instructorId'],
+            file=args['file'],
+            assessment=args.get('scoreAnalysis'),  
+            code_clarity=args.get('scoreRate'),  
+            feedback=args.get('feedback')
+        )
+        
+        # Add to the session and commit to the database
+        db.session.add(report)
+        db.session.commit()
+
+        # Return the created report with status 201
+        return report, 201
+    
+    @marshal_with(genai_report_fields)
+    def get(self, report_id=None):
+        if report_id is None:
+            # Fetch reports based on team_id and file
+            team_id = request.args.get('team_id')
+            file = request.args.get('file')
+
+            if team_id and file:
+                # Fetch reports that match team_id and file
+                reports = GenAIReport.query.filter_by(team_id=team_id, file=file).all()
+                return reports  # Return reports for the given team_id and file
+            else:
+                # If no team_id or file is provided, fetch all reports
+                reports = GenAIReport.query.all()
+                return reports  # Return all reports if no filter is applied
+        else:
+            # Fetch a specific report by ID
+            report = GenAIReport.query.get_or_404(report_id)
+            return report  # Return a specific report if report_id is provided
+
+
+    def delete(self, report_id):
+        # Delete a specific report by ID
+        report = GenAIReport.query.get_or_404(report_id)
+        db.session.delete(report)
+        db.session.commit()
+        return {'message': 'Report deleted successfully'}, 204
+
+    @marshal_with(genai_report_fields)
+    def put(self, report_id):
+        # Update a specific report by ID
+        args = genai_report_parser.parse_args()
+        report = GenAIReport.query.get_or_404(report_id)
+
+        # Update report fields
+        report.assessment = args.get('assessment', report.assessment)
+        report.code_clarity = args.get('codeClarity', report.code_clarity)
+        report.feedback = args.get('feedback', report.feedback)
+
+        db.session.commit()  # Commit the changes
+        return report, 200  # Return the updated report
+
 
 
 
@@ -659,6 +746,7 @@ api.add_resource(TAHomepageResource, '/ta_homepage/<int:ta_id>')
 api.add_resource(AdminHomeResource, '/admin_home')
 api.add_resource(FeedbackResource, '/feedback', '/feedback/<int:team_id>')
 api.add_resource(MilestoneSubmitsByTeamResource, '/teams/<int:team_id>/milestone_submits')
+api.add_resource(GenAIReportResource, '/genai-reports', '/genai-reports/<int:report_id>')
 
 
 

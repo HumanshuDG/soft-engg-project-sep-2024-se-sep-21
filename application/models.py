@@ -147,3 +147,19 @@ class Feedback(db.Model):
     # Relationships
     instructor = db.relationship('User', backref='given_feedbacks', lazy=True)
     team = db.relationship('Team', backref=db.backref('feedbacks', lazy=True))
+
+class GenAIReport(db.Model):
+    __tablename__ = 'gen_ai_report'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    team_id = db.Column(db.Integer, db.ForeignKey('team.id'), nullable=False)
+    instructor_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    file = db.Column(db.String(255), nullable=False)
+    assessment = db.Column(db.Float, nullable=True)  # Optional float field
+    code_clarity = db.Column(db.Float, nullable=True)  # Optional float field
+    feedback = db.Column(db.Text, nullable=True)  # Optional feedback field
+    created_on = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    instructor = db.relationship('User', backref='gen_ai_reports', lazy=True)
+    team = db.relationship('Team', backref=db.backref('gen_ai_reports', lazy=True))
