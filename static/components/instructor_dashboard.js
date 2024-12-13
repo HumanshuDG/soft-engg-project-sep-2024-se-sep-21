@@ -4,10 +4,17 @@ export default {
   template: `
     <div class="container-fluid" style="height: 90vh; display: flex; padding: 10px; box-sizing: border-box; margin-top: 10px; width: 90%;">
   
-      <!-- Left Column (Updates Section) with Increased Margins -->
-      <div class="col-md-3" style="background-color:  #e6c7ff ; padding: 20px; flex-shrink: 0; height: 100%; border: 1px solid #ddd; margin-left: 5px; margin-right: 30px;">
+      <!-- Left Column (Updates Section) with Increased Margins and Scrolling -->
+      <div class="col-md-3" style="background-color: #e6c7ff; padding: 20px; flex-shrink: 0; height: 100%; border: 1px solid #ddd; margin-left: 5px; margin-right: 30px; overflow-y: auto; max-height: 90vh;">
         <h2>Updates</h2>
-        <p>Here you can add updates or any other content relevant to the left section.</p>
+        <h4>Project Details:</h4>
+        <ul>
+          <li v-for="(project, index) in projects" :key="index">
+            <strong>{{ project.name }}</strong>
+            <p>{{ project.description }}</p>
+            <p><em>Teams Enrolled: {{ project.teams.length }}</em></p>
+          </li>
+        </ul>
       </div>
   
       <!-- Right Column (Top and Bottom Components) -->
@@ -59,7 +66,6 @@ export default {
 
   created() {
     this.fetchDashboardData();
-    this.fetchInstructorName();
     this.fetchAvailableTAs();
   },
 
@@ -72,37 +78,37 @@ export default {
         if (projectsResponse.ok) {
           const projects = await projectsResponse.json();
           this.totalProjects = projects.length;
-          this.projects = projects;
+          this.projects = projects;  
+  
+          // Destroy previous charts before generating new ones
+          this.destroyChart('teamsEnrolledChart');
+          this.destroyChart('projectsVsTAsChart');
+  
+          // Now generate charts
           this.generateTeamsEnrolledChart();
+          this.generateProjectsVsTAsChart();
         }
-
+  
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
       }
     },
-      // fetch available TAs
-      async fetchAvailableTAs() {
-        try {
-          const response = await fetch('/api/tas');
-          if (response.ok) {
-            this.availableTAs = await response.json(); // Assume response is an array of TAs
-            this.totalTAs = this.availableTAs.length; // Update the total number of TAs
-            this.generateProjectsVsTAsChart();
-          } else {
-            console.error('Error fetching TAs:', response.statusText);
-          }
-        } catch (error) {
-          console.error('Error fetching TAs:', error);
-        }
-      },
-
+  
+    // Destroy a chart if it exists
+    destroyChart(chartId) {
+      const canvas = document.getElementById(chartId);
+      if (canvas && canvas.chart) {
+        canvas.chart.destroy();  // Destroy existing chart
+      }
+    },
+  
     // Generate the "No. of Teams Enrolled in Each Project" chart
     generateTeamsEnrolledChart() {
       const projectNames = this.projects.map(project => project.name);
       const teamsData = this.projects.map(project => project.teams.length);
-
+  
       const ctx = document.getElementById('teamsEnrolledChart').getContext('2d');
-      new Chart(ctx, {
+      const chart = new Chart(ctx, {
         type: 'bar',
         data: {
           labels: projectNames,
@@ -120,15 +126,19 @@ export default {
           }
         }
       });
+  
+      // Store the chart instance on the canvas element
+      ctx.chart = chart;
     },
-
+  
     // Generate the "No. of Projects vs No. of TAs" chart
     generateProjectsVsTAsChart() {
-      const projectCounts = this.projects.length;
+      const projectCounts = this.projects.length; 
       const taCounts = this.availableTAs.length;
-
+      
+  
       const ctx = document.getElementById('projectsVsTAsChart').getContext('2d');
-      new Chart(ctx, {
+      const chart = new Chart(ctx, {
         type: 'line',
         data: {
           labels: ['Projects', 'TAs'],
@@ -145,23 +155,23 @@ export default {
           scales: { y: { beginAtZero: true } }
         }
       });
+  
+      // Store the chart instance on the canvas element
+      ctx.chart = chart;
     },
-
-    // Fetch instructor's name
-    async fetchInstructorName() {
-      const userId = localStorage.getItem('user_id');
-      if (userId) {
-        try {
-          const response = await fetch(`/api/users/${userId}`);
-          if (response.ok) {
-            const userData = await response.json();
-            this.instructorName = userData.name;
-          } else {
-            console.error('Error fetching instructor name:', response.statusText);
-          }
-        } catch (error) {
-          console.error('Error fetching instructor name:', error);
+  
+    // Fetch available TAs
+    async fetchAvailableTAs() {
+      try {
+        const response = await fetch('/api/tas');
+        if (response.ok) {
+          this.availableTAs = await response.json(); 
+          this.totalTAs = this.availableTAs.length; // Update the total number of TAs
+        } else {
+          console.error('Error fetching TAs:', response.statusText);
         }
+      } catch (error) {
+        console.error('Error fetching TAs:', error);
       }
     },
   },
