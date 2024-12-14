@@ -1,6 +1,6 @@
 export default {
   template: `
-    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <nav class="navbar navbar-expand-lg navbar-light bg-light bg-secondary">
       <div class="container-fluid">
         <div class="navbar-brand">
           <img src="static/images/logo.png" alt="Logo" style="height: 30px; width: auto;" />
@@ -80,6 +80,7 @@ export default {
       localStorage.removeItem('github_token');
       document.cookie = "github_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
 
+  
       this.$router.push({ path: '/login' });
     },
 
