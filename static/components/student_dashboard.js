@@ -1,165 +1,173 @@
 export default {
-    name: 'student_dashboard',
-  
-    template: `
-      <div class="container-fluid" style="height: 90vh; display: flex; padding: 10px; box-sizing: border-box; margin-top: 10px; width: 90%;">
-      
-        <!-- Left Column (Updates Section) with Light Dusky Blue Background -->
-        <div class="col-md-3" style="background-color: #B0C4DE; padding: 20px; flex-shrink: 0; height: 100%; border: 1px solid #ddd; margin-left: 5px; margin-right: 10px;">
-          <h2>Updates</h2>
-          <p>Here you can add updates or any other content relevant to the left section.</p>
-        </div>
-    
-        <!-- Middle Column (Activity Stats and Graph) -->
-        <div class="col-md-6" style="display: flex; flex-direction: column; height: 100%; padding-left: 10px; border: 1px solid #ddd;">
-    
-          <!-- Top Component (Activity Statistics Card) -->
-          <div class="row" style="flex-shrink: 0; height: 30%; padding: 10px; margin-bottom: 20px;">
-            <div class="col-12">
-              <div class="card" style="background-color: #d6e3f3; color: #001f3d; padding: 20px; height: 100%; border: 1px solid #ddd; box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.1);">
-                <h3 style="margin-bottom: 10px; font-size: 1.5rem; font-weight: bold; letter-spacing: 1px;">Activity Statistics</h3>
-                <ul style="font-size: 1.2rem; padding-left: 20px;">
-                  <li><strong>Projects Completed:</strong> {{ projectsCompleted }}</li>
-                  <li><strong>Pending Milestones:</strong> {{ pendingMilestones }}</li>
-                </ul>
-              </div>
-            </div>
-          </div>
-  
-          <!-- Bottom Component (Graph) -->
-          <div class="row" style="flex-grow: 1; height: 70%; padding: 10px;">
-            <div class="col-12">
-              <h3>Project Progress</h3>
-              <canvas id="projectProgressChart" style="width: 100%; height: 100%; background-color: #f5f5dc; border: 1px solid #ddd;"></canvas>
+  name: 'student_dashboard',
+
+  template: `
+    <div class="container-fluid" style="height: 90vh; display: flex; padding: 10px; box-sizing: border-box; margin-top: 10px; width: 90%;">
+
+      <!-- Left Column (Updates Section) with Light Dusky Blue Background -->
+      <div class="col-md-3" style="background-color: #B0C4DE; padding: 20px; flex-shrink: 0; height: 100%; border: 1px solid #ddd; margin-left: 5px; margin-right: 10px;">
+        <h2>Updates</h2>
+        <h4>Enrolled Projects:</h4>
+        <ul>
+          <li v-for="(project, index) in enrolledProjectsWithDetails" :key="index">
+            <strong>{{ project.name }}</strong>
+            <p><em>Total Teams: {{ project.teamsCount }}</em></p>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Middle Column (Activity Stats and Timeline Chart) -->
+      <div class="col-md-6" style="display: flex; flex-direction: column; height: 100%; padding-left: 10px; border: 1px solid #ddd;">
+
+        <!-- Top Component (Activity Statistics Card) -->
+        <div class="row" style="flex-shrink: 0; height: 30%; padding: 10px; margin-bottom: 20px;">
+          <div class="col-12">
+            <div class="card" style="background-color: #d6e3f3; color: #001f3d; padding: 20px; height: 100%; border: 1px solid #ddd; box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.1);">
+              <h3 style="margin-bottom: 10px; font-size: 1.5rem; font-weight: bold; letter-spacing: 1px;">Activity Statistics</h3>
+              <ul style="font-size: 1.2rem; padding-left: 20px;">
+                <li><strong>Projects Enrolled:</strong> {{ totalEnrolledProjects }}</li>
+              </ul>
             </div>
           </div>
         </div>
-    
-        <!-- Right Column (Upcoming Deadlines Section) with Light Dusky Blue Background -->
-        <div class="col-md-3" style="background-color:#B0C4DE; padding: 20px; flex-shrink: 0; height: 100%; border: 1px solid #ddd;">
-          <h2>Upcoming Deadlines</h2>
-          <p>List of upcoming deadlines for your projects and milestones will be shown here.</p>
+
+        <!-- Bottom Component (Project Deadline Timeline) -->
+        <div class="row" style="flex-grow: 1; height: 70%; padding: 10px;">
+          <div class="col-12">
+            <h3>Project Deadlines</h3>
+            <canvas id="projectTimelineChart" style="width: 100%; height: 100%; background-color: #f5f5dc; border: 1px solid #ddd;"></canvas>
+          </div>
         </div>
       </div>
-    `,
-  
-    data() {
-      return {
-        totalEnrolledProjects: 0,
-        totalTAs: 0,
-        enrolledProjects: [],
-        taAllocations: [],
-        milestones: [],
-        studentName: '',
-        projectsCompleted: 0,
-        pendingMilestones: 0,
-      };
+
+      <!-- Right Column (Upcoming Deadlines Section) with Light Dusky Blue Background -->
+      <div class="col-md-3" style="background-color:#B0C4DE; padding: 20px; flex-shrink: 0; height: 100%; border: 1px solid #ddd;">
+        <h2>Deadlines</h2>
+        <ul>
+          <li v-for="(project, index) in projectsWithDeadlines" :key="index">
+            <strong>{{ project.name }}</strong>
+            <p><em>Deadline: {{ project.deadline }}</em></p>
+          </li>
+        </ul>
+      </div>
+    </div>
+  `,
+
+  data() {
+    return {
+      totalEnrolledProjects: 0,
+      enrolledProjects: [],
+      projects: [],
+      studentName: '',
+      projectsWithDeadlines: [],
+      enrolledProjectsWithDetails: []
+    };
+  },
+
+  created() {
+    this.fetchDashboardData();
+    this.fetchStudentName();
+  },
+
+  methods: {
+    async fetchDashboardData() {
+      try {
+        const userId = localStorage.getItem('user_id');
+        
+        if (userId) {
+          const enrollmentsResponse = await fetch(`/api/enrollments?student_id=${userId}`);
+          if (enrollmentsResponse.ok) {
+            const enrollments = await enrollmentsResponse.json();
+            this.enrolledProjects = enrollments.map(enrollment => enrollment.project_id);
+            this.totalEnrolledProjects = this.enrolledProjects.length;
+          }
+        }
+
+        const projectsResponse = await fetch(`/api/projects`);
+        if (projectsResponse.ok) {
+          const projects = await projectsResponse.json();
+          this.projects = projects;
+
+          this.enrolledProjectsWithDetails = this.enrolledProjects.map(projectId => {
+            const project = this.projects.find(p => p.id === projectId);
+            return project ? { name: project.name, teamsCount: project.teams.length } : null;
+          }).filter(project => project !== null);
+
+          this.projectsWithDeadlines = this.projects.map(project => ({
+            name: project.name,
+            deadline: new Date(project.deadline).toLocaleDateString()  // Format the deadline to a readable format
+          }));
+
+          this.generateProjectTimelineChart(); // After data is fetched
+        }
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error);
+      }
     },
-  
-    created() {
-      this.fetchDashboardData();
-      this.fetchStudentName();
-    },
-  
-    methods: {
-      // Fetch dashboard data (enrolled projects, milestones, and TAs)
-      async fetchDashboardData() {
-        try {
-          const userId = localStorage.getItem('user_id');
-          
-          // Fetch the student's enrolled projects
-          if (userId) {
-            const enrollmentsResponse = await fetch(`/api/enrollments?student_id=${userId}`);
-            if (enrollmentsResponse.ok) {
-              const enrollments = await enrollmentsResponse.json();
-              this.enrolledProjects = enrollments.map(enrollment => enrollment.project_id);
-              this.totalEnrolledProjects = this.enrolledProjects.length;
+
+    generateProjectTimelineChart() {
+      const projectNames = this.enrolledProjects.map(projectId => {
+        const project = this.projects.find(p => p.id === projectId);
+        return project ? project.name : '';
+      });
+    
+      const projectDeadlines = this.enrolledProjects.map(projectId => {
+        const project = this.projects.find(p => p.id === projectId);
+        const deadline = project ? new Date(project.deadline) : null;
+        const diffInDays = deadline ? Math.abs(Math.floor((deadline - new Date()) / (1000 * 3600 * 24))) : 0; // Ensure positive values
+        return diffInDays; // Return absolute difference in days
+      });
+    
+      const ctx = document.getElementById('projectTimelineChart').getContext('2d');
+    
+      // Generate an array of random colors for each project
+      const colors = projectNames.map(() => {
+        return `hsl(${Math.random() * 360}, 70%, 60%)`; // Generate a random color
+      });
+    
+      new Chart(ctx, {
+        type: 'bar', // Use 'bar' for Chart.js v3 or above
+        data: {
+          labels: projectNames,
+          datasets: [{
+            label: 'Days Until Deadline',
+            data: projectDeadlines,
+            backgroundColor: colors, // Assign random colors to each project
+            borderColor: '#42a5f5',
+            borderWidth: 1,
+            barThickness: 15 // This makes the bars more visible
+          }]
+        },
+        options: {
+          responsive: true,
+          indexAxis: 'y', // Set the bars to be horizontal
+          scales: {
+            x: {
+              beginAtZero: true,
+            },
+            y: {
+              beginAtZero: true,
             }
           }
-      
-          // Fetch project details (names, completion percentages) for each enrolled project
-          const projectsResponse = await fetch(`/api/projects`);
-          if (projectsResponse.ok) {
-            this.projects = await projectsResponse.json();
-            this.generateProjectProgressChart(); // Call this after projects are fetched
-          }
-      
-          // Fetch milestones and calculate stats
-          const milestonesResponse = await fetch(`/api/milestones?student_id=${userId}`);
-          if (milestonesResponse.ok) {
-            const milestones = await milestonesResponse.json();
-            this.milestones = milestones;
-      
-            // Calculate completed and pending milestones
-            this.projectsCompleted = milestones.filter(milestone => milestone.completed).length;
-            this.pendingMilestones = milestones.filter(milestone => !milestone.completed).length;
-          }
-      
-          // Fetch total number of TAs for the second chart
-          const taResponse = await fetch('/api/ta_allocations');
-          if (taResponse.ok) {
-            const taAllocations = await taResponse.json();
-            this.totalTAs = taAllocations.length;
-            this.taAllocations = taAllocations;
+        }
+      });
+    },
+    
+    async fetchStudentName() {
+      const userId = localStorage.getItem('user_id');
+      if (userId) {
+        try {
+          const response = await fetch(`/api/users/${userId}`);
+          if (response.ok) {
+            const userData = await response.json();
+            this.studentName = userData.name;
+          } else {
+            console.error('Error fetching student name:', response.statusText);
           }
         } catch (error) {
-          console.error('Error fetching dashboard data:', error);
+          console.error('Error fetching student name:', error);
         }
-      },
-      
-  
-      // Generate the "Project Progress" chart
-      generateProjectProgressChart() {
-        const projectNames = this.enrolledProjects.map(projectId => {
-          const project = this.projects.find(p => p.id === projectId);
-          return project ? project.name : '';
-        });
-  
-        const projectCompletionData = this.enrolledProjects.map(projectId => {
-          const project = this.projects.find(p => p.id === projectId);
-          return project ? project.completionPercentage : 0;  // Assuming a 'completionPercentage' field exists
-        });
-  
-        const ctx = document.getElementById('projectProgressChart').getContext('2d');
-        new Chart(ctx, {
-          type: 'line',
-          data: {
-            labels: projectNames,
-            datasets: [{
-              label: 'Project Completion Progress (%)',
-              data: projectCompletionData,
-              fill: false,
-              borderColor: '#42a5f5',
-              tension: 0.1
-            }]
-          },
-          options: {
-            responsive: true,
-            scales: { 
-              y: { beginAtZero: true, max: 100 },
-              x: { ticks: { maxRotation: 90, minRotation: 45 } }
-            }
-          }
-        });
-      },
-  
-      // Fetch the student's name
-      async fetchStudentName() {
-        const userId = localStorage.getItem('user_id');
-        if (userId) {
-          try {
-            const response = await fetch(`/api/users/${userId}`);
-            if (response.ok) {
-              const userData = await response.json();
-              this.studentName = userData.name;
-            } else {
-              console.error('Error fetching student name:', response.statusText);
-            }
-          } catch (error) {
-            console.error('Error fetching student name:', error);
-          }
-        }
-      },
+      }
     },
-  };
-  
+  },
+};
