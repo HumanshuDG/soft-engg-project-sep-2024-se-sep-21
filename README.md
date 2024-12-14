@@ -15,6 +15,8 @@ Welcome to the CS3001 Software Engineering Project! This repository contains all
 
 ## 📦 **Setup Instructions**
 
+> **NOTE**: use `python3` for Linux environment and `python` for Windows environment.
+
 ### 1️⃣ Clone the Repository
 Copy the repository to your local machine:
 ```bash
@@ -55,7 +57,7 @@ python main.py
 🔑 Admin Login
 Use the following credentials to log in as an admin:
 
-Email: admin@email.com
+Email: admin@email.com\
 Password: admin
 
 ### 📝 Project Info
