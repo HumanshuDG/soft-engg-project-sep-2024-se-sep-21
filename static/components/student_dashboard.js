@@ -23,8 +23,9 @@ export default {
         <div class="row" style="flex-shrink: 0; height: 30%; padding: 10px; margin-bottom: 20px;">
           <div class="col-12">
             <div class="card" style="background-color: #d6e3f3; color: #001f3d; padding: 20px; height: 100%; border: 1px solid #ddd; box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.1);">
-              <h3 style="margin-bottom: 10px; font-size: 1.5rem; font-weight: bold; letter-spacing: 1px;">Activity Statistics</h3>
+              <h3 style="margin-bottom: 10px; font-size: 2rem; font-weight: bold; letter-spacing: 1px;">Student Information</h3> <!-- Increased font size here -->
               <ul style="font-size: 1.2rem; padding-left: 20px;">
+                <li><strong>Student Name:</strong> {{ studentName }}</li>
                 <li><strong>Projects Enrolled:</strong> {{ totalEnrolledProjects }}</li>
               </ul>
             </div>
@@ -35,7 +36,7 @@ export default {
         <div class="row" style="flex-grow: 1; height: 70%; padding: 10px;">
           <div class="col-12">
             <h3>Project Deadlines</h3>
-            <canvas id="projectTimelineChart" style="width: 100%; height: 100%; background-color: #f5f5dc; border: 1px solid #ddd;"></canvas>
+            <canvas id="projectTimelineChart" style="width: 100%; height: 400px; background-color: #f5f5dc; border: 1px solid #ddd;"></canvas> <!-- Increased height of chart here -->
           </div>
         </div>
       </div>
